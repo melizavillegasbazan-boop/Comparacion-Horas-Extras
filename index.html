@@ -156,6 +156,7 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (() => {
 'use strict';
@@ -179,21 +180,27 @@ function validDate(y,m,d){const dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCF
 function isoDate(y,m,d){return `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
 function uniqueSorted(values){return [...new Set(values.filter(v=>v!==null&&v!==undefined&&v!==''))].sort((a,b)=>typeof a==='number'&&typeof b==='number'?a-b:String(a).localeCompare(String(b),'es'))}
 
-/* Lector XLSX sin dependencias externas. */
-class ZipReader{
-  constructor(buffer){this.buffer=buffer;this.bytes=new Uint8Array(buffer);this.view=new DataView(buffer);this.entries=new Map();this.parseCentralDirectory()}
-  u16(o){return this.view.getUint16(o,true)} u32(o){return this.view.getUint32(o,true)}
-  parseCentralDirectory(){let eocd=-1;const min=Math.max(0,this.bytes.length-65557);for(let i=this.bytes.length-22;i>=min;i--){if(this.u32(i)===0x06054b50){eocd=i;break}}if(eocd<0)throw new Error('El archivo no parece ser un XLSX válido.');const count=this.u16(eocd+10);let pos=this.u32(eocd+16);const dec=new TextDecoder('utf-8');for(let i=0;i<count;i++){if(this.u32(pos)!==0x02014b50)throw new Error('No fue posible leer la estructura interna del XLSX.');const flags=this.u16(pos+8),method=this.u16(pos+10),compSize=this.u32(pos+20),uncompSize=this.u32(pos+24),nameLen=this.u16(pos+28),extraLen=this.u16(pos+30),commentLen=this.u16(pos+32),localOffset=this.u32(pos+42);const name=dec.decode(this.bytes.slice(pos+46,pos+46+nameLen));this.entries.set(name,{name,flags,method,compSize,uncompSize,localOffset});pos+=46+nameLen+extraLen+commentLen}}
-  has(name){return this.entries.has(name)}
-  async get(name){const e=this.entries.get(name);if(!e)throw new Error(`No se encontró ${name} dentro del XLSX.`);const o=e.localOffset;if(this.u32(o)!==0x04034b50)throw new Error('Cabecera ZIP inválida.');const nameLen=this.u16(o+26),extraLen=this.u16(o+28),start=o+30+nameLen+extraLen;const compressed=this.bytes.slice(start,start+e.compSize);if(e.method===0)return compressed;if(e.method===8){if(typeof DecompressionStream==='undefined')throw new Error('El navegador no permite descomprimir XLSX. Utiliza Microsoft Edge o Google Chrome actualizado.');const stream=new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return new Uint8Array(await new Response(stream).arrayBuffer())}throw new Error(`Método de compresión XLSX no compatible: ${e.method}`)}
-  async text(name){return new TextDecoder('utf-8').decode(await this.get(name))}
-}
-function parseXml(text,label){const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.getElementsByTagName('parsererror')[0];if(err)throw new Error(`No fue posible leer ${label}.`);return doc}
-function colIndex(ref){const m=String(ref||'').match(/^([A-Z]+)\d+$/i);if(!m)return 0;let n=0;for(const ch of m[1].toUpperCase())n=n*26+ch.charCodeAt(0)-64;return n-1}
-function cellValue(cell,shared){const t=cell.getAttribute('t')||'';if(t==='inlineStr'){const ts=cell.getElementsByTagName('t');return Array.from(ts).map(x=>x.textContent||'').join('')}const v=cell.getElementsByTagName('v')[0];if(!v)return '';const raw=v.textContent??'';if(t==='s')return shared[Number(raw)]??'';if(t==='str'||t==='d'||t==='e')return raw;if(t==='b')return raw==='1';const n=Number(raw);return Number.isFinite(n)?n:raw}
-async function readXlsx(file,progress){const zip=new ZipReader(await file.arrayBuffer());const workbookDoc=parseXml(await zip.text('xl/workbook.xml'),'el libro Excel');const relDoc=parseXml(await zip.text('xl/_rels/workbook.xml.rels'),'las relaciones del libro');const rels={};Array.from(relDoc.getElementsByTagName('Relationship')).forEach(r=>rels[r.getAttribute('Id')]=r.getAttribute('Target'));
-  let shared=[];if(zip.has('xl/sharedStrings.xml')){progress?.('Leyendo textos compartidos...');const sharedDoc=parseXml(await zip.text('xl/sharedStrings.xml'),'los textos del libro');shared=Array.from(sharedDoc.getElementsByTagName('si')).map(si=>Array.from(si.getElementsByTagName('t')).map(t=>t.textContent||'').join(''))}
-  const sheets=[];const nodes=Array.from(workbookDoc.getElementsByTagName('sheet'));for(let i=0;i<nodes.length;i++){const node=nodes[i],name=node.getAttribute('name')||`Hoja ${i+1}`;const rid=node.getAttribute('r:id')||node.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');let target=rels[rid];if(!target)continue;target=target.replace(/^\//,'');if(!target.startsWith('xl/'))target='xl/'+target.replace(/^\.\//,'');if(!zip.has(target))continue;progress?.(`Leyendo hoja ${i+1} de ${nodes.length}: ${name}`);const doc=parseXml(await zip.text(target),`la hoja ${name}`);const rows=[];for(const rowNode of Array.from(doc.getElementsByTagName('row'))){const rnum=Number(rowNode.getAttribute('r')||rows.length+1);const arr=[];for(const c of Array.from(rowNode.getElementsByTagName('c'))){arr[colIndex(c.getAttribute('r'))]=cellValue(c,shared)}rows[rnum-1]=arr}sheets.push({name,rows})}
+/* Lector XLSX compatible con GitHub Pages mediante SheetJS.\n   Los archivos se leen localmente en el navegador; no se envían a ningún servidor. */
+async function readXlsx(file,progress){
+  if(typeof XLSX==='undefined'){
+    throw new Error('No se pudo cargar el lector de Excel. Verifica tu conexión a internet y actualiza la página con Ctrl + F5.');
+  }
+  progress?.('Leyendo el archivo Excel...');
+  const buffer=await file.arrayBuffer();
+  let workbook;
+  try{
+    workbook=XLSX.read(buffer,{type:'array',cellDates:false,cellNF:false,cellText:false,raw:true});
+  }catch(error){
+    throw new Error('El archivo no pudo abrirse como Excel. Comprueba que sea .xlsx o .xlsm y que no esté dañado.');
+  }
+  const sheets=[];
+  for(let i=0;i<workbook.SheetNames.length;i++){
+    const name=workbook.SheetNames[i];
+    progress?.(`Leyendo hoja ${i+1} de ${workbook.SheetNames.length}: ${name}`);
+    const worksheet=workbook.Sheets[name];
+    const rows=XLSX.utils.sheet_to_json(worksheet,{header:1,raw:true,defval:''});
+    sheets.push({name,rows});
+  }
   return {sheets};
 }
 
@@ -400,7 +407,7 @@ $('reportDownloadPdf').addEventListener('click',downloadExecutivePdf);
 $('printReport').addEventListener('click',printExecutiveReport);
 $('reportPrint').addEventListener('click',printExecutiveReport);
 $('workerPdf').addEventListener('click',()=>{if(!state.activeWorker)return;downloadBlob(buildExecutivePdf(state.activeWorker),`Detalle_HE_${state.activeWorker.worker.replace(/[^A-Za-z0-9]+/g,'_')}_${state.results.year}_${String(state.results.month).padStart(2,'0')}.pdf`)});
-if(typeof DecompressionStream==='undefined')showMessage('Este navegador no admite la lectura local de archivos XLSX. Abre la página en Microsoft Edge o Google Chrome actualizado.','error');
+if(typeof XLSX==='undefined')showMessage('No se pudo cargar el lector de Excel. Verifica tu conexión a internet y actualiza la página con Ctrl + F5.','error');
 })();
 </script>
 </body>
