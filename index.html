@@ -244,12 +244,12 @@ function renderAll(){renderKpis();renderRates();renderStates();renderSummary();r
 function renderKpis(){const r=state.results,good=r.summary.filter(x=>x.status==='Conforme').length,review=r.summary.length-good;$('kpiWorkers').textContent=r.summary.length;$('kpiGood').textContent=good;$('kpiReview').textContent=review;$('kpiBd').textContent=formatHours(r.totalBd);$('kpiSap').textContent=formatHours(r.totalSap);$('kpiDiff').textContent=signedHours(r.totalSap-r.totalBd);$('kpiBdRows').textContent=`${r.bd.length.toLocaleString('es-CL')} registros considerados`;$('kpiSapRows').textContent=`${r.sap.length.toLocaleString('es-CL')} registros 50%, 75% o 100%`}
 function renderRates(){$('rateGrid').innerHTML=['50%','75%','100%'].map(rate=>{const x=state.results.rateSummary[rate],max=Math.max(x.bd,x.sap,1),pct=Math.min(100,Math.abs(x.sap-x.bd)/max*100);return `<div class="rate-card"><div class="rate-head"><span>Horas al ${rate}</span><span>${signedHours(x.sap-x.bd)} h</span></div><div class="rate-values"><div><span>BD.HE</span><strong>${formatHours(x.bd)}</strong></div><div><span>SAP</span><strong>${formatHours(x.sap)}</strong></div></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join('')}
 function renderStates(){const entries=Object.entries(state.results.formStates).sort((a,b)=>b[1]-a[1]);$('statusList').innerHTML=entries.length?entries.map(([k,v])=>`<div class="status-row"><span>${escapeHtml(k)}</span><strong>${v}</strong></div>`).join(''):'<div class="status-row"><span>Sin registros BD.HE</span><strong>0</strong></div>'}
-function renderActionSummary(){const r=state.results,good=r.summary.filter(x=>x.status==='Conforme').length,review=r.summary.length-good;const text=review?`El informe separará <strong>${good} trabajador(es) con pago respaldado</strong> y <strong>${review} caso(s) pendientes de revisión</strong>.`:`Los <strong>${good} trabajador(es)</strong> analizados presentan conciliación completa para el período.`;$('reportActionText').innerHTML=text;const chip=$('adminDecisionChip');chip.textContent=review?`${good} pagos respaldados · ${review} pagos pendientes`:`${good} pagos respaldados · Sin pendientes`;chip.className=`admin-decision-chip ${review?'review':'good'}`}
+function renderActionSummary(){const r=state.results,good=r.summary.filter(x=>x.status==='Conforme').length,review=r.summary.length-good;const text=review?`El informe separará <strong>${good} trabajador(es) con pago respaldado</strong> y <strong>${review} caso(s) pendientes de revisión</strong>.`:`Los <strong>${good} trabajador(es)</strong> analizados presentan conciliación completa para el período.`;$('reportActionText').innerHTML=text;const chip=$('adminDecisionChip');chip.textContent=review?`${good} pagos respaldados · ${review} por revisar`:`${good} pagos respaldados · Sin observaciones`;chip.className=`admin-decision-chip ${review?'review':'good'}`}
 function filteredSummary(){const q=normalizeText($('summarySearch').value),st=$('summaryStatus').value;return state.results.summary.filter(x=>(st==='Todos'||x.status===st)&&(!q||normalizeText(`${x.worker} ${x.bdName} ${x.sapName} ${x.observation}`).includes(q)))}
 function renderSummary(){const rows=filteredSummary(),pages=Math.max(1,Math.ceil(rows.length/SUMMARY_PAGE));state.summaryPage=Math.min(Math.max(1,state.summaryPage),pages);const page=rows.slice((state.summaryPage-1)*SUMMARY_PAGE,state.summaryPage*SUMMARY_PAGE);$('summaryBody').innerHTML=page.length?page.map(x=>`<tr class="${x.status==='Revisar'?'row-review':''}"><td><button class="worker-link" data-worker="${escapeHtml(x.canonical)}">${escapeHtml(x.worker)}</button></td><td>${escapeHtml(x.bdName||'—')}</td><td>${escapeHtml(x.sapName||'—')}</td><td class="num">${formatHours(x.bdHours)}</td><td class="num">${formatHours(x.sapHours)}</td><td class="num">${signedHours(x.diff)}</td><td class="num">${x.issues.length}</td><td><span class="status-pill ${statusClass(x.status)}">${x.status}</span></td><td>${escapeHtml(x.observation)}</td><td><button class="btn btn-secondary detail-btn" style="height:31px" data-worker="${escapeHtml(x.canonical)}">Ver detalle</button></td></tr>`).join(''):`<tr><td colspan="10" class="empty">No hay resultados para los filtros seleccionados.</td></tr>`;$('summaryCount').textContent=`${rows.length} trabajador(es)`;$('summaryPageInfo').textContent=`Página ${state.summaryPage} de ${pages} · ${rows.length} resultado(s)`;$('summaryPrev').disabled=state.summaryPage<=1;$('summaryNext').disabled=state.summaryPage>=pages}
 function administrativeObservation(worker,limit=2){
   const issues=worker.issues||[];
-  if(!issues.length)return 'Coincide por trabajador, fecha, recargo y horas dentro de la tolerancia configurada.';
+  if(!issues.length)return 'Coincide por fecha, recargo y cantidad de horas dentro de la tolerancia configurada.';
   const parts=issues.slice(0,limit).map(d=>{
     const prefix=`${formatDate(d.date)} ${d.rate}`;
     if(d.status==='Solo SAP')return `${prefix}: ${formatHours(d.sapHours)} h en SAP sin respaldo aprobado en BD.HE`;
@@ -265,35 +265,86 @@ function reportHtml(){
   const good=r.summary.filter(x=>x.status==='Conforme');
   const review=r.summary.filter(x=>x.status==='Revisar');
   const excluded=r.approvedOnly?Object.entries(r.formStates).filter(([k])=>!isApprovedStatus(k)).reduce((a,[,v])=>a+v,0):0;
-  const decisionTitle=review.length?'Aprobación parcial recomendada':'Conciliación completa';
+  const decisionTitle=review.length?'Revisión administrativa requerida':'Conciliación completa';
   const decisionText=review.length
-    ?`Aprobar el pago de ${good.length} trabajador(es) conformes y mantener pendientes ${review.length} caso(s) hasta su revisión.`
+    ?`${good.length} trabajador(es) presentan respaldo conforme y ${review.length} deben revisarse antes de autorizar el pago.`
     :`Todos los trabajadores analizados cuentan con respaldo conciliado para la aprobación administrativa del pago.`;
-  const goodRows=good.length?good.map(x=>`<tr><td class="worker">${escapeHtml(x.worker)}</td><td class="hours">${formatHours(x.bdHours)} h</td><td class="hours">${formatHours(x.sapHours)} h</td><td class="hours">${signedHours(x.diff)} h</td><td class="observation">${escapeHtml(administrativeObservation(x))}</td><td><span class="decision-badge ok">APROBAR PAGO</span></td></tr>`).join(''):`<tr><td colspan="6" class="exec-empty">No se identificaron trabajadores conformes.</td></tr>`;
-  const reviewRows=review.length?review.map(x=>`<tr><td class="worker">${escapeHtml(x.worker)}</td><td class="hours">${formatHours(x.bdHours)} h</td><td class="hours">${formatHours(x.sapHours)} h</td><td class="hours">${signedHours(x.diff)} h</td><td class="hours">${x.issues.length}</td><td class="observation">${escapeHtml(administrativeObservation(x))}</td><td><span class="decision-badge review">PAGO PENDIENTE</span></td></tr>`).join(''):`<tr><td colspan="7" class="exec-empty">No se identificaron trabajadores con diferencias.</td></tr>`;
+  const goodRows=good.length?good.map(x=>`<tr><td class="worker">${escapeHtml(x.worker)}</td><td class="hours">${formatHours(x.bdHours)} h</td><td class="hours">${formatHours(x.sapHours)} h</td><td class="hours">${signedHours(x.diff)} h</td><td class="observation">${escapeHtml(administrativeObservation(x))}</td><td class="decision-cell"><span class="decision-badge ok">APROBAR</span></td></tr>`).join(''):`<tr><td colspan="6" class="exec-empty">No se identificaron trabajadores conformes.</td></tr>`;
+  const reviewRows=review.length?review.map(x=>`<tr><td class="worker">${escapeHtml(x.worker)}</td><td class="hours">${formatHours(x.bdHours)} h</td><td class="hours">${formatHours(x.sapHours)} h</td><td class="hours">${signedHours(x.diff)} h</td><td class="hours">${x.issues.length}</td><td class="observation">${escapeHtml(administrativeObservation(x))}</td><td class="decision-cell"><span class="decision-badge review">REVISAR</span></td></tr>`).join(''):`<tr><td colspan="7" class="exec-empty">No se identificaron trabajadores con diferencias.</td></tr>`;
   return `<div class="exec-report">
     <div class="exec-decision ${review.length?'warning':'approved'}"><div class="decision-icon">${review.length?'!':'✓'}</div><div><strong>${decisionTitle}</strong><span>${decisionText}</span></div></div>
     <div class="exec-kpis">
       <div class="exec-kpi"><span>Trabajadores</span><strong>${r.summary.length}</strong></div>
-      <div class="exec-kpi"><span>Pago respaldado</span><strong>${good.length}</strong></div>
-      <div class="exec-kpi"><span>Pago pendiente</span><strong>${review.length}</strong></div>
+      <div class="exec-kpi"><span>Conformes</span><strong>${good.length}</strong></div>
+      <div class="exec-kpi"><span>Por revisar</span><strong>${review.length}</strong></div>
       <div class="exec-kpi"><span>Horas BD.HE</span><strong>${formatHours(r.totalBd)}</strong></div>
       <div class="exec-kpi"><span>Horas SAP</span><strong>${formatHours(r.totalSap)}</strong></div>
     </div>
-    <div class="exec-section"><div class="exec-section-head"><div><h5>1. Trabajadores conformes</h5><p>Registros conciliados por fecha, recargo y cantidad de horas.</p></div><strong>${good.length} trabajador(es)</strong></div><div class="exec-table-wrap"><table class="exec-table"><colgroup><col style="width:22%"><col style="width:8%"><col style="width:8%"><col style="width:9%"><col style="width:36%"><col style="width:17%"></colgroup><thead><tr><th>Trabajador</th><th>BD.HE</th><th>SAP</th><th>Diferencia</th><th>Observación administrativa</th><th>Decisión</th></tr></thead><tbody>${goodRows}</tbody></table></div></div>
-    <div class="exec-section review-section"><div class="exec-section-head"><div><h5>2. Trabajadores con diferencias</h5><p>Casos que deben revisarse antes de autorizar el pago.</p></div><strong>${review.length} trabajador(es)</strong></div><div class="exec-table-wrap"><table class="exec-table"><colgroup><col style="width:18%"><col style="width:7%"><col style="width:7%"><col style="width:8%"><col style="width:7%"><col style="width:36%"><col style="width:17%"></colgroup><thead><tr><th>Trabajador</th><th>BD.HE</th><th>SAP</th><th>Diferencia</th><th>Incidencias</th><th>Observación administrativa</th><th>Decisión</th></tr></thead><tbody>${reviewRows}</tbody></table></div></div>
-    <div class="exec-admin-note"><strong>Criterio administrativo:</strong> autorizar únicamente los pagos clasificados como <strong>Conformes</strong>. Los casos de la segunda tabla deben permanecer pendientes hasta validar el detalle individual y regularizar la fuente correspondiente.${excluded?` Se excluyeron ${excluded} registro(s) de BD.HE porque no estaban aprobados.`:''}</div>
+    <div class="exec-section"><div class="exec-section-head"><div><h5>1. Trabajadores conformes</h5><p>Registros conciliados por fecha, recargo y cantidad de horas.</p></div><strong>${good.length} trabajador(es)</strong></div><div class="exec-table-wrap"><table class="exec-table"><colgroup><col style="width:20%"><col style="width:7%"><col style="width:7%"><col style="width:8%"><col style="width:48%"><col style="width:10%"></colgroup><thead><tr><th>Trabajador</th><th>BD.HE</th><th>SAP</th><th>Diferencia</th><th>Observación administrativa</th><th>Decisión</th></tr></thead><tbody>${goodRows}</tbody></table></div></div>
+    <div class="exec-section review-section"><div class="exec-section-head"><div><h5>2. Trabajadores con diferencias</h5><p>Casos que deben revisarse antes de autorizar el pago.</p></div><strong>${review.length} trabajador(es)</strong></div><div class="exec-table-wrap"><table class="exec-table"><colgroup><col style="width:17%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:5%"><col style="width:49%"><col style="width:10%"></colgroup><thead><tr><th>Trabajador</th><th>BD.HE</th><th>SAP</th><th>Diferencia</th><th>Inc.</th><th>Observación administrativa</th><th>Decisión</th></tr></thead><tbody>${reviewRows}</tbody></table></div></div>
+    <div class="exec-admin-note"><strong>Criterio administrativo:</strong> autorizar únicamente los registros clasificados como <strong>Conformes</strong>. Para los casos cuya decisión sea <strong>REVISAR</strong>, validar el detalle individual y regularizar la fuente correspondiente antes de aprobar el pago.${excluded?` Se excluyeron ${excluded} registro(s) de BD.HE porque no estaban aprobados.`:''}</div>
     <div class="exec-signatures"><div class="exec-signature">Elaborado por Administración</div><div class="exec-signature">Revisado / autorizado por</div></div>
   </div>`;
 }
 function openWorker(canonical){const x=state.results.summary.find(s=>s.canonical===canonical);if(!x)return;state.activeWorker=x;$('modalWorker').textContent=x.worker;$('modalNames').textContent=`BD.HE: ${x.bdName||'Sin registro'} · SAP: ${x.sapName||'Sin registro'}`;$('modalBd').textContent=formatHours(x.bdHours);$('modalSap').textContent=formatHours(x.sapHours);$('modalDiff').textContent=signedHours(x.diff);$('modalStatus').textContent=x.status;$('modalStatus').style.color=x.status==='Conforme'?'var(--green)':'var(--red)';$('modalBody').innerHTML=x.all.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.rate.localeCompare(b.rate)).map(d=>`<tr class="${d.status!=='Conforme'?'row-review':''}"><td>${formatDate(d.date)}</td><td>${d.rate}</td><td class="num">${formatHours(d.bdHours)} h</td><td class="num">${formatHours(d.sapHours)} h</td><td class="num">${signedHours(d.diff)} h</td><td><span class="status-pill ${statusClass(d.status)}">${d.status}</span></td><td>${escapeHtml(d.observation)}</td></tr>`).join('');$('workerModal').classList.add('show');document.body.style.overflow='hidden'}
 function closeWorker(){$('workerModal').classList.remove('show');document.body.style.overflow=''}
 
-function downloadExecutivePdf(){if(!state.results)return;showLoading('Generando informe PDF...','Preparando resumen ejecutivo y detalle de incidencias.');setTimeout(()=>{try{downloadBlob(buildExecutivePdf(),`Informe_Conciliacion_HE_${state.results.year}_${String(state.results.month).padStart(2,'0')}.pdf`)}finally{hideLoading()}},40)}
+function openPdfLoadingWindow(){
+  const preview=window.open('about:blank','_blank');
+  if(!preview)return null;
+  preview.document.open();
+  preview.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Generando informe PDF...</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f7fa;font-family:Segoe UI,Arial,sans-serif;color:#002f6c}.box{text-align:center;padding:30px}.spinner{width:38px;height:38px;margin:0 auto 14px;border:4px solid #dce6ee;border-top-color:#0077be;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}p{color:#66798a;font-size:13px}</style></head><body><div class="box"><div class="spinner"></div><strong>Generando informe PDF...</strong><p>El documento se abrirá automáticamente en esta pestaña.</p></div></body></html>`);
+  preview.document.close();
+  return preview;
+}
+function downloadAndOpenPdf(blob,name,previewWindow=null){
+  const url=URL.createObjectURL(blob);
+  let opened=false;
+  if(previewWindow&&!previewWindow.closed){previewWindow.location.replace(url);opened=true}
+  if(!opened){const tab=window.open(url,'_blank');opened=Boolean(tab)}
+  const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+  if(!opened)showMessage('El PDF se descargó, pero el navegador bloqueó la pestaña de vista previa. Habilita las ventanas emergentes para abrirlo automáticamente.','warning');
+  setTimeout(()=>URL.revokeObjectURL(url),120000);
+}
+function downloadExecutivePdf(){
+  if(!state.results)return;
+  const previewWindow=openPdfLoadingWindow();
+  showLoading('Generando informe PDF...','Preparando el informe administrativo.');
+  setTimeout(()=>{
+    try{
+      const blob=buildExecutivePdf();
+      const name=`Informe_Conciliacion_HE_${state.results.year}_${String(state.results.month).padStart(2,'0')}.pdf`;
+      downloadAndOpenPdf(blob,name,previewWindow);
+    }catch(e){
+      if(previewWindow&&!previewWindow.closed)previewWindow.close();
+      showMessage(`No fue posible generar el PDF: ${e.message||e}`,'error');
+    }finally{hideLoading()}
+  },40);
+}
 function printableReportHtml(){
   const r=state.results,period=`${MONTHS[r.month-1]} de ${r.year}`,bdLabel=state.bd.fileCount>1?`${state.bd.fileCount} archivos BD.HE`:state.bd.filename;
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de conciliación - ${escapeHtml(period)}</title><style>
-    @page{size:A4 landscape;margin:9mm 10mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,Segoe UI,sans-serif;color:#17212b;font-size:9px;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{max-width:277mm;margin:0 auto}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0077be;padding-bottom:7px;margin-bottom:8px}.logo{font-size:27px;font-weight:900;letter-spacing:-1.5px;color:#0077be;line-height:.9}.tag{font-size:6px;font-weight:700;color:#002f6c;margin-top:4px}.head h1{margin:0;text-align:right;color:#002f6c;font-size:17px}.head p{margin:3px 0 0;text-align:right;color:#66798a;font-size:8px}.source{display:grid;grid-template-columns:1fr auto;gap:12px;padding:7px 9px;background:#f4f7fa;border:1px solid #dce6ee;margin-bottom:8px;color:#4d6272}.report-meta{font-size:7.3px;color:#66798a}.exec-decision{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;border-radius:7px;padding:7px 9px;margin:7px 0 8px;border:1px solid}.exec-decision.approved{background:#edf8f2;border-color:#b9dec9;color:#135f41}.exec-decision.warning{background:#fff8e9;border-color:#eed39b;color:#77510b}.decision-icon{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;font-weight:900;font-size:12px}.exec-decision strong{display:block;font-size:9px;margin-bottom:1px}.exec-decision span{font-size:7.5px}.exec-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:7px 0 9px}.exec-kpi{padding:6px 7px;border:1px solid #dce6ee;border-radius:6px;background:#f8fbfd}.exec-kpi span{display:block;color:#66798a;font-size:6.3px;text-transform:uppercase;font-weight:700}.exec-kpi strong{display:block;margin-top:3px;color:#002f6c;font-size:12px}.exec-section{margin-top:10px;break-inside:auto}.exec-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:4px}.exec-section-head h5{margin:0;color:#002f6c;font-size:10px}.exec-section-head p{margin:1px 0 0;color:#66798a;font-size:7px}.exec-table-wrap{border:1px solid #dce6ee;border-radius:6px;overflow:hidden}.exec-table{width:100%;border-collapse:collapse;table-layout:fixed}.exec-table thead{display:table-header-group}.exec-table tr{break-inside:avoid;page-break-inside:avoid}.exec-table th{background:#edf3f7;color:#4d6272;padding:5px;font-size:6.6px;text-transform:uppercase;text-align:left;border-bottom:1px solid #cddce6}.exec-table td{padding:5px;border-bottom:1px solid #e7eef3;font-size:7px;vertical-align:top;word-wrap:break-word}.exec-table tr:last-child td{border-bottom:0}.exec-table .worker{font-weight:700;color:#002f6c}.exec-table .hours{text-align:right;white-space:nowrap}.decision-badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:7.4px;font-weight:850;white-space:nowrap}.decision-badge.ok{background:#e7f6ee;color:#126a47;border:1px solid #c4e5d4}.decision-badge.review{background:#fff1df;color:#8b4f00;border:1px solid #efd0a3}.exec-table tbody tr:nth-child(even){background:#fbfdfe}.exec-table .observation{line-height:1.35}.exec-empty{text-align:center;color:#66798a;padding:12px}.exec-admin-note{margin-top:9px;padding:7px 9px;border-left:3px solid #0077be;background:#f3f7fa;color:#344b5c;font-size:7.2px}.exec-signatures{display:grid;grid-template-columns:1fr 1fr;gap:45px;margin-top:18px;break-inside:avoid}.exec-signature{padding-top:5px;border-top:1px solid #002f6c;text-align:center;color:#002f6c;font-size:7px}.footer{margin-top:9px;padding-top:5px;border-top:1px solid #dce6ee;color:#66798a;font-size:6.5px}.no-print{margin:0 0 8px;text-align:right}.no-print button{border:0;border-radius:6px;background:#002f6c;color:#fff;padding:7px 12px;font-weight:700;cursor:pointer}@media print{.no-print{display:none}.page{max-width:none}.exec-table thead{display:table-header-group}.exec-table tr{break-inside:avoid;page-break-inside:avoid}}
+    @page{size:A4 landscape;margin:9mm 10mm}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Segoe UI,sans-serif;color:#17212b;font-size:8.4px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .page{max-width:277mm;margin:0 auto}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:3px solid #0077be;padding-bottom:7px;margin-bottom:8px}
+    .logo{font-size:27px;font-weight:900;letter-spacing:-1.5px;color:#0077be;line-height:.9}.tag{font-size:6px;font-weight:700;color:#002f6c;margin-top:4px}
+    .head h1{margin:0;text-align:right;color:#002f6c;font-size:17px;line-height:1.15}.head p{margin:3px 0 0;text-align:right;color:#66798a;font-size:8px}
+    .source{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:7px 9px;background:#f4f7fa;border:1px solid #dce6ee;margin-bottom:8px;color:#4d6272;overflow-wrap:anywhere}
+    .exec-decision{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:center;border-radius:7px;padding:8px 10px;margin:7px 0 8px;border:1px solid;overflow-wrap:anywhere}
+    .exec-decision.approved{background:#edf8f2;border-color:#b9dec9;color:#135f41}.exec-decision.warning{background:#fff8e9;border-color:#eed39b;color:#77510b}
+    .decision-icon{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;font-weight:900;font-size:12px}
+    .exec-decision strong{display:block;font-size:9px;line-height:1.25;margin-bottom:2px;overflow-wrap:anywhere}.exec-decision span{display:block;font-size:7.5px;line-height:1.4;overflow-wrap:anywhere}
+    .exec-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:7px 0 9px}.exec-kpi{padding:6px 7px;border:1px solid #dce6ee;border-radius:6px;background:#f8fbfd}.exec-kpi span{display:block;color:#66798a;font-size:6.3px;text-transform:uppercase;font-weight:700}.exec-kpi strong{display:block;margin-top:3px;color:#002f6c;font-size:12px}
+    .exec-section{margin-top:10px;break-inside:auto;page-break-inside:auto}.exec-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:5px;break-after:avoid;page-break-after:avoid}.exec-section-head h5{margin:0;color:#002f6c;font-size:10px}.exec-section-head p{margin:1px 0 0;color:#66798a;font-size:7px}
+    .exec-table-wrap{border:1px solid #dce6ee;border-radius:6px;overflow:visible}.exec-table{width:100%;border-collapse:collapse;table-layout:fixed}.exec-table thead{display:table-header-group}.exec-table tr{break-inside:avoid;page-break-inside:avoid}
+    .exec-table th{background:#edf3f7;color:#4d6272;padding:5px 6px;font-size:6.6px;line-height:1.25;text-transform:uppercase;text-align:left;border-bottom:1px solid #cddce6;overflow-wrap:anywhere;word-break:normal;white-space:normal}
+    .exec-table td{padding:6px;border-bottom:1px solid #e7eef3;font-size:7px;line-height:1.42;vertical-align:top;overflow-wrap:anywhere;word-break:normal;white-space:normal;hyphens:auto}
+    .exec-table tr:last-child td{border-bottom:0}.exec-table .worker{font-weight:700;color:#002f6c}.exec-table .hours{text-align:right;white-space:nowrap}.exec-table .observation{line-height:1.42;overflow-wrap:anywhere;word-break:normal;white-space:normal}.exec-table tbody tr:nth-child(even){background:#fbfdfe}
+    .decision-cell{text-align:center;vertical-align:middle!important}.decision-badge{display:block;width:100%;max-width:100%;padding:4px 5px;border-radius:5px;font-size:7.1px;font-weight:850;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere;word-break:normal}.decision-badge.ok{background:#e7f6ee;color:#126a47;border:1px solid #c4e5d4}.decision-badge.review{background:#fff1df;color:#8b4f00;border:1px solid #efd0a3}
+    .exec-empty{text-align:center;color:#66798a;padding:12px}.exec-admin-note{margin-top:9px;padding:8px 10px;border-left:3px solid #0077be;background:#f3f7fa;color:#344b5c;font-size:7.2px;line-height:1.45;overflow-wrap:anywhere}.exec-signatures{display:grid;grid-template-columns:1fr 1fr;gap:45px;margin-top:18px;break-inside:avoid;page-break-inside:avoid}.exec-signature{padding-top:5px;border-top:1px solid #002f6c;text-align:center;color:#002f6c;font-size:7px}.footer{margin-top:9px;padding-top:5px;border-top:1px solid #dce6ee;color:#66798a;font-size:6.5px}.no-print{margin:0 0 8px;text-align:right}.no-print button{border:0;border-radius:6px;background:#002f6c;color:#fff;padding:7px 12px;font-weight:700;cursor:pointer}
+    @media print{.no-print{display:none}.page{max-width:none}.exec-table-wrap{overflow:visible}.exec-table thead{display:table-header-group}.exec-table tr{break-inside:avoid;page-break-inside:avoid}}
   </style></head><body><div class="page"><div class="no-print"><button onclick="window.print()">Imprimir informe</button></div><header class="head"><div><div class="logo">transelec</div><div class="tag">Conectamos las energías del futuro</div></div><div><h1>Informe de conciliación de horas extras</h1><p>Validación administrativa previa al pago · ${escapeHtml(period)}</p></div></header><div class="source"><span><strong>Fuentes:</strong> ${escapeHtml(bdLabel)} y ${escapeHtml(state.sap.filename)}.</span><span><strong>Generado:</strong> ${new Date().toLocaleString('es-CL')}</span></div><main>${reportHtml()}</main><footer class="footer">Documento generado automáticamente · Uso administrativo para validación previa al pago.</footer></div></body></html>`;
 }
 function printExecutiveReport(){
@@ -313,8 +364,43 @@ function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.
 const PDF_W=841.89,PDF_H=595.28,PDF_LEFT=40,PDF_RIGHT=PDF_W-40,PDF_CONTENT_W=PDF_W-80,PDF_BOTTOM=PDF_H-42;
 function pdfSanitize(s){return String(s??'').replace(/[–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,'...').replace(/\u00a0/g,' ').replace(/•/g,'*').replace(/[^\x00-\xFF]/g,'?')}
 function pdfEscape(s){return pdfSanitize(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[\r\n]+/g,' ')}
-function textWidth(s,size){let w=0;for(const ch of pdfSanitize(s)){if('MW@#%'.includes(ch))w+=.82;else if('ilI1.,:;!|'.includes(ch))w+=.28;else if(ch===' ')w+=.28;else w+=.52}return w*size}
-function wrapText(text,maxWidth,size){const words=pdfSanitize(text).split(/\s+/).filter(Boolean),lines=[];let line='';for(const w of words){const test=line?line+' '+w:w;if(textWidth(test,size)<=maxWidth||!line)line=test;else{lines.push(line);line=w}}if(line)lines.push(line);return lines.length?lines:['']}
+function textWidth(s,size){
+  let w=0;
+  for(const ch of pdfSanitize(s)){
+    if('MW@#%&'.includes(ch))w+=.90;
+    else if('mw'.includes(ch))w+=.78;
+    else if('ABCDEFGHKNOPQRSTUVXYZ'.includes(ch))w+=.64;
+    else if('0123456789'.includes(ch))w+=.57;
+    else if('ilI1.,:;!|'.includes(ch))w+=.29;
+    else if(ch===' ')w+=.31;
+    else w+=.56;
+  }
+  return w*size*1.04;
+}
+function splitPdfWord(word,maxWidth,size){
+  const parts=[];let part='';
+  for(const ch of word){
+    const test=part+ch;
+    if(part&&textWidth(test,size)>maxWidth){parts.push(part);part=ch}else part=test;
+  }
+  if(part)parts.push(part);
+  return parts.length?parts:[''];
+}
+function wrapText(text,maxWidth,size){
+  const safeWidth=Math.max(8,maxWidth-2),tokens=[];
+  for(const word of pdfSanitize(text).split(/\s+/).filter(Boolean)){
+    if(textWidth(word,size)>safeWidth)tokens.push(...splitPdfWord(word,safeWidth,size));
+    else tokens.push(word);
+  }
+  const lines=[];let line='';
+  for(const token of tokens){
+    const test=line?`${line} ${token}`:token;
+    if(!line||textWidth(test,size)<=safeWidth)line=test;
+    else{lines.push(line);line=token}
+  }
+  if(line)lines.push(line);
+  return lines.length?lines:[''];
+}
 class PdfCanvas{
   constructor(){this.pages=[];this.page=null;this.addPage()}
   addPage(){this.page={ops:[]};this.pages.push(this.page);return this.page}
@@ -329,7 +415,43 @@ function pageHeader(pdf,title,subtitle,pageNum){pdf.text('transelec',PDF_LEFT,36
 function ensureSpace(ctx,needed,title,subtitle){if(ctx.y+needed>PDF_BOTTOM){ctx.pdf.addPage();ctx.page++;pageHeader(ctx.pdf,title,subtitle,ctx.page);ctx.y=78;return true}return false}
 function drawSection(ctx,title){ensureSpace(ctx,28,ctx.title,ctx.subtitle);ctx.pdf.text(title,PDF_LEFT,ctx.y,11,true,[0,47,108]);ctx.pdf.line(PDF_LEFT,ctx.y+6,PDF_RIGHT,ctx.y+6,[203,218,228],.6);ctx.y+=20}
 function drawKpis(ctx,items){const gap=9,w=(PDF_CONTENT_W-gap*2)/3,h=48;for(let i=0;i<items.length;i++){if(i%3===0&&i>0)ctx.y+=h+gap;const col=i%3,x=PDF_LEFT+col*(w+gap);ctx.pdf.rect(x,ctx.y,w,h,[246,249,251],[215,226,234],.5);ctx.pdf.text(items[i][0],x+10,ctx.y+14,7,true,[96,117,132]);ctx.pdf.text(items[i][1],x+10,ctx.y+35,16,true,items[i][2]||[0,47,108])}ctx.y+=h+8}
-function drawTable(ctx,columns,rows,opts={}){const headH=22,size=opts.size||7.5,lineH=opts.lineH||9,pad=5;const drawHead=()=>{ensureSpace(ctx,headH+5,ctx.title,ctx.subtitle);ctx.pdf.rect(PDF_LEFT,ctx.y,PDF_CONTENT_W,headH,[239,244,247],[205,218,227],.5);let x=PDF_LEFT;columns.forEach(c=>{ctx.pdf.text(c.label,c.align==='right'?x+c.w-pad:x+pad,ctx.y+14,7,true,[65,85,101],c.align||'left');x+=c.w});ctx.y+=headH};drawHead();for(const row of rows){const wrapped=columns.map(c=>wrapText(String(row[c.key]??''),c.w-pad*2,size));const rh=Math.max(20,...wrapped.map(a=>a.length*lineH+8));if(ctx.y+rh>PDF_BOTTOM){ctx.pdf.addPage();ctx.page++;pageHeader(ctx.pdf,ctx.title,ctx.subtitle,ctx.page);ctx.y=78;drawHead()}const fill=opts.rowFill?opts.rowFill(row):null;if(fill)ctx.pdf.rect(PDF_LEFT,ctx.y,PDF_CONTENT_W,rh,fill,null);ctx.pdf.line(PDF_LEFT,ctx.y+rh,PDF_RIGHT,ctx.y+rh,[226,233,238],.4);let x=PDF_LEFT;columns.forEach((c,j)=>{const lines=wrapped[j];lines.forEach((ln,k)=>ctx.pdf.text(ln,c.align==='right'?x+c.w-pad:x+pad,ctx.y+12+k*lineH,size,c.bold?.(row)||false,c.color?.(row)||[30,45,57],c.align||'left'));x+=c.w});ctx.y+=rh}ctx.y+=8}
+function drawTable(ctx,columns,rows,opts={}){
+  const size=opts.size||7.5,lineH=opts.lineH||9,pad=opts.pad||6,headerSize=opts.headerSize||6.7,headerLineH=opts.headerLineH||8;
+  const headerLines=columns.map(c=>wrapText(c.label,c.w-pad*2,headerSize));
+  const headH=Math.max(24,...headerLines.map(lines=>lines.length*headerLineH+9));
+  const anchor=(x,w,align)=>align==='right'?x+w-pad:align==='center'?x+w/2:x+pad;
+  const drawVerticals=(top,height)=>{let vx=PDF_LEFT;for(let i=0;i<columns.length-1;i++){vx+=columns[i].w;ctx.pdf.line(vx,top,vx,top+height,[224,232,238],.35)}};
+  const drawHead=()=>{
+    ensureSpace(ctx,headH+5,ctx.title,ctx.subtitle);
+    ctx.pdf.rect(PDF_LEFT,ctx.y,PDF_CONTENT_W,headH,[239,244,247],[205,218,227],.5);
+    let x=PDF_LEFT;
+    columns.forEach((c,j)=>{
+      const align=c.headerAlign||c.align||'left';
+      headerLines[j].forEach((ln,k)=>ctx.pdf.text(ln,anchor(x,c.w,align),ctx.y+12+k*headerLineH,headerSize,true,[65,85,101],align));
+      x+=c.w;
+    });
+    drawVerticals(ctx.y,headH);
+    ctx.y+=headH;
+  };
+  drawHead();
+  for(const row of rows){
+    const wrapped=columns.map(c=>wrapText(String(row[c.key]??''),c.w-pad*2,size));
+    const rh=Math.max(opts.minRowHeight||22,...wrapped.map(lines=>lines.length*lineH+10));
+    if(ctx.y+rh>PDF_BOTTOM){ctx.pdf.addPage();ctx.page++;pageHeader(ctx.pdf,ctx.title,ctx.subtitle,ctx.page);ctx.y=78;drawHead()}
+    const fill=opts.rowFill?opts.rowFill(row):null;
+    if(fill)ctx.pdf.rect(PDF_LEFT,ctx.y,PDF_CONTENT_W,rh,fill,null);
+    ctx.pdf.line(PDF_LEFT,ctx.y+rh,PDF_RIGHT,ctx.y+rh,[226,233,238],.4);
+    drawVerticals(ctx.y,rh);
+    let x=PDF_LEFT;
+    columns.forEach((c,j)=>{
+      const align=c.align||'left',cellColor=c.color?c.color(row):(opts.color?opts.color(row):[30,45,57]),cellBold=c.bold?c.bold(row):(opts.bold?opts.bold(row):false);
+      wrapped[j].forEach((ln,k)=>ctx.pdf.text(ln,anchor(x,c.w,align),ctx.y+13+k*lineH,size,cellBold,cellColor,align));
+      x+=c.w;
+    });
+    ctx.y+=rh;
+  }
+  ctx.y+=8;
+}
 function buildExecutivePdf(worker=null){
   const r=state.results,pdf=new PdfCanvas(),period=`${MONTHS[r.month-1]} de ${r.year}`,title=worker?'Detalle de horas extras':'Informe de conciliación de horas extras',subtitle=worker?worker.worker:`Validación administrativa · ${period}`,ctx={pdf,y:78,page:1,title,subtitle};pageHeader(pdf,title,subtitle,1);
   if(worker){
@@ -338,15 +460,15 @@ function buildExecutivePdf(worker=null){
     drawTable(ctx,[{label:'Fecha',key:'date',w:80},{label:'Recargo',key:'rate',w:60},{label:'BD.HE',key:'bd',w:70,align:'right'},{label:'SAP',key:'sap',w:70,align:'right'},{label:'Dif.',key:'diff',w:70,align:'right'},{label:'Estado',key:'status',w:100},{label:'Observación',key:'obs',w:PDF_CONTENT_W-450}],rows,{size:7.2,rowFill:x=>x.status==='Conforme'?null:[255,249,238]});return pdfToBlob(pdf)
   }
   const goodRows=r.summary.filter(x=>x.status==='Conforme'),reviewRows=r.summary.filter(x=>x.status==='Revisar'),bdLabel=state.bd.fileCount>1?`${state.bd.fileCount} archivos BD.HE`:state.bd.filename;
-  pdf.rect(PDF_LEFT,ctx.y,PDF_CONTENT_W,58,[247,250,252],[203,218,228],.6);pdf.text('Período analizado',PDF_LEFT+10,ctx.y+16,7,true,[91,111,126]);pdf.text(period,PDF_LEFT+10,ctx.y+34,13,true,[0,47,108]);pdf.text(`Fuentes: ${bdLabel} y ${state.sap.filename}`,PDF_LEFT+10,ctx.y+49,7,false,[75,92,105]);pdf.text(reviewRows.length?'APROBACIÓN PARCIAL RECOMENDADA':'CONCILIACIÓN COMPLETA',PDF_RIGHT-10,ctx.y+24,10,true,reviewRows.length?[145,78,0]:[22,105,71],'right');pdf.text(reviewRows.length?`${goodRows.length} pagos respaldados · ${reviewRows.length} pendientes`:`${goodRows.length} pagos respaldados · Sin pendientes`,PDF_RIGHT-10,ctx.y+44,8,false,[55,74,88],'right');ctx.y+=72;
-  drawKpis(ctx,[['Trabajadores',String(r.summary.length)],['Pago respaldado',String(goodRows.length),[22,135,93]],['Pago pendiente',String(reviewRows.length),[199,61,74]],['Horas BD.HE',formatHours(r.totalBd)],['Horas SAP',formatHours(r.totalSap)],['Diferencia SAP - BD.HE',signedHours(r.totalSap-r.totalBd),[200,135,0]]]);
-  drawSection(ctx,'Criterio de autorización');const criteria=reviewRows.length?`Aprobar el pago de los ${goodRows.length} trabajador(es) conformes. Mantener pendientes los ${reviewRows.length} caso(s) con diferencias hasta validar o regularizar la información.`:'Todos los trabajadores analizados presentan respaldo suficiente para aprobar el pago dentro de la tolerancia configurada.';ctx.y=pdf.wrapped(criteria,PDF_LEFT,ctx.y,PDF_CONTENT_W,8.5,12,true,reviewRows.length?[130,83,0]:[22,105,71])+8;
+  pdf.rect(PDF_LEFT,ctx.y,PDF_CONTENT_W,58,[247,250,252],[203,218,228],.6);pdf.text('Período analizado',PDF_LEFT+10,ctx.y+16,7,true,[91,111,126]);pdf.text(period,PDF_LEFT+10,ctx.y+34,13,true,[0,47,108]);pdf.text(`Fuentes: ${bdLabel} y ${state.sap.filename}`,PDF_LEFT+10,ctx.y+49,7,false,[75,92,105]);pdf.text(reviewRows.length?'REVISIÓN REQUERIDA':'CONCILIACIÓN COMPLETA',PDF_RIGHT-10,ctx.y+24,9.5,true,reviewRows.length?[145,78,0]:[22,105,71],'right');pdf.text(reviewRows.length?`${goodRows.length} conformes · ${reviewRows.length} por revisar`:`${goodRows.length} conformes · Sin observaciones`,PDF_RIGHT-10,ctx.y+44,8,false,[55,74,88],'right');ctx.y+=72;
+  drawKpis(ctx,[['Trabajadores',String(r.summary.length)],['Conformes',String(goodRows.length),[22,135,93]],['Por revisar',String(reviewRows.length),[199,61,74]],['Horas BD.HE',formatHours(r.totalBd)],['Horas SAP',formatHours(r.totalSap)],['Diferencia SAP - BD.HE',signedHours(r.totalSap-r.totalBd),[200,135,0]]]);
+  drawSection(ctx,'Criterio de autorización');const criteria=reviewRows.length?`Autorizar los ${goodRows.length} trabajador(es) conformes. Los ${reviewRows.length} caso(s) restantes deben revisarse y regularizarse antes de aprobar el pago.`:'Todos los trabajadores analizados presentan respaldo suficiente para aprobar el pago dentro de la tolerancia configurada.';ctx.y=pdf.wrapped(criteria,PDF_LEFT,ctx.y,PDF_CONTENT_W,8.5,12,true,reviewRows.length?[130,83,0]:[22,105,71])+8;
   drawSection(ctx,'1. Trabajadores conformes');
   if(!goodRows.length){ctx.y=pdf.wrapped('No se identificaron trabajadores conformes.',PDF_LEFT,ctx.y,PDF_CONTENT_W,9,12,false,[100,115,126])+8}
-  else{const rows=goodRows.map(x=>({worker:x.worker,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),obs:administrativeObservation(x),decision:'APROBAR PAGO'}));drawTable(ctx,[{label:'Trabajador',key:'worker',w:180},{label:'BD.HE',key:'bd',w:65,align:'right'},{label:'SAP',key:'sap',w:65,align:'right'},{label:'Dif.',key:'diff',w:65,align:'right'},{label:'Observación administrativa',key:'obs',w:PDF_CONTENT_W-487},{label:'Decisión',key:'decision',w:112}],rows,{size:7,rowFill:()=>[244,251,247],color:x=>x.decision==='APROBAR PAGO'?[22,105,71]:[30,45,57]})}
+  else{const rows=goodRows.map(x=>({worker:x.worker,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),obs:administrativeObservation(x),decision:'APROBAR'}));const fixed=150+55+55+58+90;drawTable(ctx,[{label:'Trabajador',key:'worker',w:150},{label:'BD.HE',key:'bd',w:55,align:'right',headerAlign:'center'},{label:'SAP',key:'sap',w:55,align:'right',headerAlign:'center'},{label:'Dif.',key:'diff',w:58,align:'right',headerAlign:'center'},{label:'Observación administrativa',key:'obs',w:PDF_CONTENT_W-fixed},{label:'Decisión',key:'decision',w:90,align:'center',headerAlign:'center',bold:()=>true,color:()=>[22,105,71]}],rows,{size:7.1,lineH:9.2,pad:6,rowFill:()=>[244,251,247]})}
   drawSection(ctx,'2. Trabajadores con diferencias');
   if(!reviewRows.length){ctx.y=pdf.wrapped('No se identificaron trabajadores con diferencias.',PDF_LEFT,ctx.y,PDF_CONTENT_W,9,12,false,[22,105,71])+8}
-  else{const rows=reviewRows.map(x=>({worker:x.worker,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),inc:String(x.issues.length),obs:administrativeObservation(x),decision:'PAGO PENDIENTE'}));drawTable(ctx,[{label:'Trabajador',key:'worker',w:150},{label:'BD',key:'bd',w:55,align:'right'},{label:'SAP',key:'sap',w:55,align:'right'},{label:'Dif.',key:'diff',w:60,align:'right'},{label:'Inc.',key:'inc',w:40,align:'right'},{label:'Observación administrativa',key:'obs',w:PDF_CONTENT_W-477},{label:'Decisión',key:'decision',w:117}],rows,{size:6.8,lineH:8.4,rowFill:()=>[255,249,238],color:x=>x.decision==='PAGO PENDIENTE'?[145,78,0]:[30,45,57]})}
+  else{const rows=reviewRows.map(x=>({worker:x.worker,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),inc:String(x.issues.length),obs:administrativeObservation(x),decision:'REVISAR'}));const fixed=130+48+48+55+38+82;drawTable(ctx,[{label:'Trabajador',key:'worker',w:130},{label:'BD',key:'bd',w:48,align:'right',headerAlign:'center'},{label:'SAP',key:'sap',w:48,align:'right',headerAlign:'center'},{label:'Dif.',key:'diff',w:55,align:'right',headerAlign:'center'},{label:'Inc.',key:'inc',w:38,align:'right',headerAlign:'center'},{label:'Observación administrativa',key:'obs',w:PDF_CONTENT_W-fixed},{label:'Decisión',key:'decision',w:82,align:'center',headerAlign:'center',bold:()=>true,color:()=>[145,78,0]}],rows,{size:7,lineH:9.2,pad:6,rowFill:()=>[255,249,238]})}
   if(ctx.y+25>PDF_H-24){pdf.addPage();ctx.page++;pageHeader(pdf,ctx.title,ctx.subtitle,ctx.page);ctx.y=78;drawSection(ctx,'Autorización administrativa');ctx.y=pdf.wrapped('Firmas de elaboración y autorización del informe de conciliación.',PDF_LEFT,ctx.y,PDF_CONTENT_W,8,11,false,[75,92,105])+14}else{ctx.y+=5}pdf.line(PDF_LEFT+20,ctx.y,PDF_LEFT+300,ctx.y,[0,47,108],1);pdf.line(PDF_RIGHT-300,ctx.y,PDF_RIGHT-20,ctx.y,[0,47,108],1);pdf.text('Elaborado por Administración',PDF_LEFT+160,ctx.y+14,7,false,[0,47,108],'center');pdf.text('Revisado / autorizado por',PDF_RIGHT-160,ctx.y+14,7,false,[0,47,108],'center');return pdfToBlob(pdf);
 }
 function pdfToBlob(pdf){const objects=[];const add=s=>(objects.push(s),objects.length);const catalog=add(''),pagesObj=add(''),font1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),font2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');const pageNums=[];for(const p of pdf.pages){const stream=p.ops.join('\n');const content=add(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);const page=add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${PDF_W} ${PDF_H}] /Resources << /Font << /F1 ${font1} 0 R /F2 ${font2} 0 R >> >> /Contents ${content} 0 R >>`);pageNums.push(page)}objects[catalog-1]=`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;objects[pagesObj-1]=`<< /Type /Pages /Kids [${pageNums.map(n=>`${n} 0 R`).join(' ')}] /Count ${pageNums.length} >>`;let out='%PDF-1.4\n%âãÏÓ\n',offsets=[0];for(let i=0;i<objects.length;i++){offsets.push(out.length);out+=`${i+1} 0 obj\n${objects[i]}\nendobj\n`}const xref=out.length;out+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;for(let i=1;i<offsets.length;i++)out+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';out+=`trailer\n<< /Size ${objects.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;const bytes=new Uint8Array(out.length);for(let i=0;i<out.length;i++)bytes[i]=out.charCodeAt(i)&255;return new Blob([bytes],{type:'application/pdf'})}
