@@ -1,1112 +1,263 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comparador de Horas Extras | BD.HE vs SAP</title>
+  <title>Conciliación de Horas Extras | BD.HE vs SAP</title>
   <style>
-    :root {
-      --navy: #0b2742;
-      --navy-2: #123b61;
-      --blue: #1769aa;
-      --orange: #f28c28;
-      --green: #16835b;
-      --red: #c63f45;
-      --yellow: #d99b16;
-      --teal: #0f7c83;
-      --ink: #17212b;
-      --muted: #667585;
-      --line: #dce4eb;
-      --soft: #f4f7fa;
-      --white: #ffffff;
-      --shadow: 0 12px 30px rgba(9, 36, 62, .10);
-      --radius: 16px;
+    :root{
+      --navy:#002f6c;--navy2:#073b67;--blue:#0077be;--blue2:#0d6ca6;--orange:#ef7d00;
+      --green:#16875d;--yellow:#c88700;--red:#c73d4a;--purple:#7950a3;--teal:#187f86;
+      --text:#1e2d39;--muted:#66798a;--line:#dce6ee;--soft:#f3f7fa;--white:#fff;
+      --shadow:0 10px 30px rgba(8,46,78,.09);--radius:16px;
     }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: Inter, "Segoe UI", Arial, sans-serif;
-      color: var(--ink);
-      background: linear-gradient(180deg, #eef4f8 0, #f8fafc 340px, #f7f9fb 100%);
-    }
-
-    button, select, input { font: inherit; }
-    button { cursor: pointer; }
-
-    .topbar {
-      background: linear-gradient(120deg, var(--navy), var(--navy-2));
-      color: white;
-      padding: 28px 0 88px;
-      position: relative;
-      overflow: hidden;
-    }
-    .topbar::after {
-      content: "";
-      position: absolute;
-      width: 420px;
-      height: 420px;
-      right: -140px;
-      top: -230px;
-      border: 70px solid rgba(242, 140, 40, .22);
-      border-radius: 50%;
-    }
-    .topbar::before {
-      content: "";
-      position: absolute;
-      width: 260px;
-      height: 260px;
-      right: 180px;
-      bottom: -210px;
-      border: 55px solid rgba(255,255,255,.06);
-      border-radius: 50%;
-    }
-
-    .container { width: min(1440px, calc(100% - 40px)); margin: 0 auto; }
-    .hero { display: flex; align-items: center; justify-content: space-between; gap: 28px; position: relative; z-index: 1; }
-    .brand-line { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; opacity: .88; }
-    .brand-mark { width: 36px; height: 8px; background: var(--orange); border-radius: 999px; box-shadow: 17px 0 0 rgba(255,255,255,.9); }
-    h1 { margin: 0; font-size: clamp(30px, 4vw, 52px); line-height: 1.05; letter-spacing: -.035em; max-width: 850px; }
-    .subtitle { max-width: 840px; margin: 16px 0 0; color: #dce9f5; line-height: 1.55; font-size: 16px; }
-    .privacy-pill { min-width: 240px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18); padding: 15px 17px; border-radius: 14px; backdrop-filter: blur(8px); font-size: 13px; line-height: 1.45; }
-    .privacy-pill strong { display:block; color:#fff; margin-bottom:4px; }
-
-    main { margin-top: -58px; padding-bottom: 60px; position: relative; z-index: 2; }
-    .card { background: var(--white); border: 1px solid rgba(214,224,233,.9); border-radius: var(--radius); box-shadow: var(--shadow); }
-    .workspace { padding: 22px; }
-    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
-    .section-head h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; color: var(--navy); }
-    .section-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
-    .step { display:inline-grid; place-items:center; min-width:28px; height:28px; border-radius:9px; background:#e9f2f9; color:var(--blue); font-weight:800; font-size:13px; margin-right:9px; }
-
-    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .upload-box {
-      border: 1.5px dashed #aabccc;
-      border-radius: 14px;
-      padding: 18px;
-      min-height: 156px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: .2s ease;
-      background: #fbfdff;
-    }
-    .upload-box:hover, .upload-box.dragover { border-color: var(--blue); background:#f2f8fc; transform: translateY(-1px); }
-    .upload-box.loaded { border-style: solid; border-color: #92cdb4; background: #f3fbf7; }
-    .upload-title { display:flex; align-items:center; gap:12px; }
-    .file-icon { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; background:#e9f2f9; color:var(--blue); font-weight:900; }
-    .upload-box.loaded .file-icon { background:#dff4e9; color:var(--green); }
-    .upload-title h3 { margin:0; font-size:15px; color:var(--navy); }
-    .upload-title p { margin:4px 0 0; font-size:12px; color:var(--muted); }
-    .file-meta { margin-top:14px; min-height:22px; color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .file-label { display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; width:max-content; border:0; color:white; background:var(--navy-2); padding:10px 14px; border-radius:10px; font-weight:700; font-size:13px; }
-    .file-label:hover { background:var(--navy); }
-    input[type=file] { display:none; }
-
-    .control-panel { margin-top: 18px; padding-top:18px; border-top:1px solid var(--line); }
-    .controls { display:grid; grid-template-columns: 1fr 1fr 1fr 1.25fr auto; gap:12px; align-items:end; }
-    .field label { display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#617283; margin:0 0 7px 2px; }
-    .field select, .field input[type=number] { width:100%; height:42px; border:1px solid #cfdbe5; background:white; border-radius:10px; padding:0 11px; color:var(--ink); outline:none; }
-    .field select:focus, .field input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(23,105,170,.12); }
-    .switch-field { height:42px; display:flex; align-items:center; gap:10px; padding:0 12px; border:1px solid #cfdbe5; border-radius:10px; background:#fff; color:#3d4c59; font-size:13px; }
-    .switch-field input { accent-color:var(--blue); width:17px; height:17px; }
-    .primary-btn { height:42px; border:0; border-radius:10px; padding:0 19px; background:linear-gradient(120deg, var(--orange), #e77714); color:white; font-weight:800; box-shadow:0 8px 18px rgba(242,140,40,.25); white-space:nowrap; }
-    .primary-btn:hover { filter:brightness(.96); transform:translateY(-1px); }
-    .primary-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-    .secondary-btn { height:38px; border:1px solid #cbd7e1; border-radius:10px; padding:0 13px; background:white; color:var(--navy-2); font-weight:750; }
-    .secondary-btn:hover { background:#f3f7fa; }
-    .danger-outline { color:var(--red); }
-
-    .message { display:none; margin-top:14px; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.45; }
-    .message.show { display:block; }
-    .message.error { background:#fff0f1; color:#962c32; border:1px solid #f1c3c6; }
-    .message.info { background:#edf6fc; color:#215f8d; border:1px solid #c4e1f2; }
-    .message.success { background:#effaf4; color:#116743; border:1px solid #bde4cf; }
-
-    #results { display:none; }
-    #results.show { display:block; }
-    .results-space { margin-top:18px; }
-    .kpi-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; }
-    .kpi { padding:16px; min-height:112px; position:relative; overflow:hidden; }
-    .kpi::after { content:""; position:absolute; width:72px; height:72px; border-radius:50%; right:-27px; bottom:-30px; background:rgba(23,105,170,.08); }
-    .kpi .label { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.055em; }
-    .kpi .value { margin-top:10px; font-size:27px; font-weight:850; color:var(--navy); letter-spacing:-.035em; }
-    .kpi .small { margin-top:4px; font-size:11px; color:var(--muted); }
-    .kpi.good .value { color:var(--green); }
-    .kpi.bad .value { color:var(--red); }
-    .kpi.warn .value { color:var(--yellow); }
-
-    .grid-2 { display:grid; grid-template-columns: minmax(0, 1.85fr) minmax(300px, .75fr); gap:16px; margin-top:16px; }
-    .panel { padding:18px; }
-    .panel h3 { margin:0; color:var(--navy); font-size:17px; letter-spacing:-.015em; }
-    .panel-sub { margin:5px 0 0; color:var(--muted); font-size:12px; line-height:1.45; }
-
-    .rate-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
-    .rate-card { border:1px solid var(--line); border-radius:12px; padding:13px; background:#fbfdff; }
-    .rate-head { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; font-weight:800; color:var(--navy); }
-    .rate-values { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
-    .rate-values span { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; font-weight:750; }
-    .rate-values strong { display:block; margin-top:3px; font-size:17px; }
-    .bar-track { height:7px; border-radius:999px; background:#e9eff4; margin-top:11px; overflow:hidden; }
-    .bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--blue),var(--teal)); width:0; }
-
-    .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
-    .badge { display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border-radius:999px; font-size:10px; font-weight:800; white-space:nowrap; }
-    .badge::before { content:""; width:6px; height:6px; border-radius:50%; }
-    .badge.good { background:#eaf8f1; color:#126a47; } .badge.good::before{background:var(--green);}
-    .badge.diff { background:#fff6e4; color:#93630b; } .badge.diff::before{background:var(--yellow);}
-    .badge.form { background:#edf5fb; color:#236895; } .badge.form::before{background:var(--blue);}
-    .badge.sap { background:#f5eefb; color:#704098; } .badge.sap::before{background:#8552ad;}
-    .badge.unmatched { background:#fff0f1; color:#9a3035; } .badge.unmatched::before{background:var(--red);}
-
-    .mapping-card { margin-top:16px; }
-    details.card > summary { list-style:none; padding:17px 19px; cursor:pointer; font-weight:800; color:var(--navy); display:flex; justify-content:space-between; align-items:center; }
-    details.card > summary::-webkit-details-marker { display:none; }
-    details.card > summary::after { content:"+"; font-size:20px; color:var(--blue); }
-    details[open].card > summary::after { content:"−"; }
-    .mapping-content { padding:0 19px 19px; border-top:1px solid var(--line); }
-    .mapping-note { font-size:12px; color:var(--muted); line-height:1.5; margin:13px 0; }
-    .mapping-table-wrap { max-height:360px; overflow:auto; border:1px solid var(--line); border-radius:11px; }
-    .mapping-table select { width:100%; min-width:240px; border:1px solid #ccd8e2; border-radius:8px; padding:7px; background:white; }
-    .confidence { font-size:10px; font-weight:800; padding:4px 7px; border-radius:999px; }
-    .confidence.high { color:#126a47; background:#eaf8f1; }
-    .confidence.medium { color:#93630b; background:#fff6e4; }
-    .confidence.low { color:#9a3035; background:#fff0f1; }
-
-    .table-card { margin-top:16px; overflow:hidden; }
-    .table-toolbar { padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--line); }
-    .toolbar-left h3 { margin:0; font-size:17px; color:var(--navy); }
-    .toolbar-left p { margin:4px 0 0; color:var(--muted); font-size:11px; }
-    .toolbar-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
-    .search { height:38px; min-width:220px; border:1px solid #cfdbe5; border-radius:10px; padding:0 11px; outline:none; }
-    .filter-select { height:38px; border:1px solid #cfdbe5; border-radius:10px; padding:0 9px; background:white; }
-    .table-scroll { overflow:auto; max-height:560px; }
-    table { width:100%; border-collapse:collapse; min-width:980px; }
-    th { position:sticky; top:0; z-index:2; background:#f2f6f9; color:#536676; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.05em; padding:11px 12px; border-bottom:1px solid var(--line); }
-    td { padding:11px 12px; border-bottom:1px solid #edf1f4; font-size:12px; vertical-align:top; }
-    tbody tr:hover { background:#f8fbfd; }
-    td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
-    .status-pill { display:inline-flex; align-items:center; justify-content:center; padding:5px 8px; border-radius:999px; font-size:10px; font-weight:850; white-space:nowrap; }
-    .status-Conforme { color:#126a47; background:#e9f7f0; }
-    .status-Revisar, .status-Diferencia { color:#8d5d09; background:#fff4df; }
-    .status-Solo-formulario { color:#1d628f; background:#eaf4fb; }
-    .status-Solo-SAP { color:#6b3b91; background:#f3ecf9; }
-    .status-Sin-asociación { color:#982e34; background:#ffedef; }
-    .row-issue { background:#fffdfa; }
-    .row-danger { background:#fffafb; }
-    .empty-row { text-align:center; padding:28px; color:var(--muted); }
-    .pagination { display:flex; justify-content:space-between; align-items:center; padding:12px 17px; border-top:1px solid var(--line); color:var(--muted); font-size:11px; }
-    .page-buttons { display:flex; gap:7px; }
-    .page-buttons button { width:34px; height:32px; border:1px solid #cfdbe5; background:white; border-radius:8px; color:var(--navy); }
-    .page-buttons button:disabled { opacity:.4; cursor:not-allowed; }
-
-    .report-card { margin-top:16px; padding:20px; }
-    .report-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
-    .report-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .report-body { margin-top:16px; border:1px solid var(--line); background:#fcfdfe; border-radius:12px; padding:18px; line-height:1.55; font-size:13px; max-height:560px; overflow:auto; }
-    .report-body h4 { color:var(--navy); margin:0 0 8px; font-size:16px; }
-    .report-body h5 { color:var(--navy-2); margin:18px 0 7px; font-size:13px; }
-    .report-body ul { margin:7px 0 0 20px; padding:0; }
-    .report-body li { margin:5px 0; }
-    .report-meta { color:var(--muted); font-size:11px; }
-
-    .method { margin-top:16px; padding:17px 19px; box-shadow:none; }
-    .method-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-    .method-item strong { display:block; color:var(--navy); font-size:12px; margin-bottom:4px; }
-    .method-item span { color:var(--muted); font-size:11px; line-height:1.45; }
-
-    footer { text-align:center; color:#758391; font-size:11px; padding:26px 0 4px; }
-
-    .loading-overlay { position:fixed; inset:0; background:rgba(9,31,51,.42); display:none; align-items:center; justify-content:center; z-index:50; backdrop-filter:blur(3px); }
-    .loading-overlay.show { display:flex; }
-    .loader-box { background:white; border-radius:15px; padding:22px 26px; min-width:270px; box-shadow:var(--shadow); text-align:center; }
-    .spinner { width:36px; height:36px; border:4px solid #dce8f1; border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    @media (max-width: 1180px) {
-      .kpi-grid { grid-template-columns:repeat(3,1fr); }
-      .controls { grid-template-columns:repeat(3,1fr); }
-      .primary-btn { width:100%; }
-    }
-    @media (max-width: 850px) {
-      .hero { flex-direction:column; align-items:flex-start; }
-      .privacy-pill { width:100%; }
-      .upload-grid, .grid-2 { grid-template-columns:1fr; }
-      .controls { grid-template-columns:1fr 1fr; }
-      .kpi-grid { grid-template-columns:1fr 1fr; }
-      .rate-grid, .method-grid { grid-template-columns:1fr; }
-      .table-toolbar, .report-head { flex-direction:column; align-items:stretch; }
-      .toolbar-actions { width:100%; }
-      .search { flex:1; min-width:160px; }
-    }
-    @media (max-width: 560px) {
-      .container { width:min(100% - 22px, 1440px); }
-      .topbar { padding-top:22px; }
-      .workspace { padding:15px; }
-      .controls, .kpi-grid { grid-template-columns:1fr; }
-      .kpi { min-height:auto; }
-    }
-
-    @media print {
-      body { background:white; }
-      .topbar { padding:18px 0 26px; }
-      main { margin-top:0; }
-      .workspace, .mapping-card, .detail-card, footer, .no-print { display:none !important; }
-      #results { display:block !important; }
-      .kpi-grid { grid-template-columns:repeat(3,1fr); }
-      .card { box-shadow:none; break-inside:avoid; }
-      .grid-2 { grid-template-columns:1fr; }
-      .report-body { max-height:none; overflow:visible; }
-      .report-card { border:0; padding:0; margin-top:16px; }
-      .report-actions { display:none; }
-      .container { width:100%; }
-    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;background:linear-gradient(180deg,#f5f8fb 0,#edf3f7 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text)}
+    button,input,select{font:inherit} button{cursor:pointer}
+    .topline{height:5px;background:linear-gradient(90deg,var(--blue),var(--navy),var(--orange))}
+    .shell{max-width:1480px;margin:0 auto;padding:24px 24px 48px}
+    .hero{display:flex;justify-content:space-between;gap:28px;align-items:center;padding:24px 28px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+    .brand{display:flex;gap:22px;align-items:center;min-width:0}
+    .brandmark{min-width:142px}.brandmark .logo{font-size:34px;line-height:.92;font-weight:900;letter-spacing:-1.8px;color:var(--blue)}
+    .brandmark .tag{margin-top:7px;font-size:9px;font-weight:700;color:var(--navy)}
+    .divider{width:1px;height:62px;background:var(--line)}
+    h1{margin:0;color:var(--navy);font-size:29px;letter-spacing:-.5px}.subtitle{margin:7px 0 0;max-width:820px;color:var(--muted);font-size:13px;line-height:1.5}
+    .privacy{display:flex;gap:10px;align-items:center;padding:12px 14px;background:#eef7fb;border:1px solid #c9e4f2;border-radius:13px;color:#175f8f;font-size:11px;line-height:1.35;max-width:250px}.privacy-icon{font-size:21px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .upload-card{margin-top:18px;padding:22px}.section-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.section-head h2{margin:0;color:var(--navy);font-size:19px}.section-head p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.45}.step{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:800;margin-right:8px}
+    .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.dropzone{min-height:152px;border:1.5px dashed #aac0d0;border-radius:14px;background:#f9fbfd;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:18px;transition:.2s}.dropzone.dragover{border-color:var(--orange);background:#fff8f0}.dropzone.loaded{border-style:solid;border-color:#92cfb5;background:#f3fbf7}.drop-info{display:flex;gap:13px;align-items:center;min-width:0}.file-icon{width:52px;height:52px;border-radius:13px;background:linear-gradient(140deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:12px;flex:none}.file-icon.sap{background:linear-gradient(140deg,#4f3271,#8659a8)}.dropzone h3{margin:0;color:var(--navy);font-size:15px}.dropzone p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.4;max-width:520px}.file-label{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 14px;border-radius:10px;background:var(--navy);color:white;font-weight:800;font-size:11px;white-space:nowrap}.file-label:hover{filter:brightness(1.08)}input[type=file]{display:none}
+    .controls{display:grid;grid-template-columns:170px 170px 160px minmax(220px,1fr) auto;gap:12px;align-items:end;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.field label{display:block;margin:0 0 6px;color:#4c6171;font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.05em}.field select,.field input{width:100%;height:42px;border:1px solid #cbd9e3;border-radius:10px;background:#fff;padding:0 11px;color:var(--text);outline:none}.field select:focus,.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,119,190,.09)}.switchbox{height:42px;border:1px solid #cbd9e3;border-radius:10px;display:flex;align-items:center;padding:0 12px;gap:9px;background:white;font-size:12px;color:#425463}.switchbox input{width:17px;height:17px;accent-color:var(--blue)}
+    .btn{border:0;border-radius:10px;height:42px;padding:0 16px;font-weight:800;font-size:11px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}.btn-primary{background:linear-gradient(120deg,var(--orange),#e66e00);color:white;box-shadow:0 7px 18px rgba(239,125,0,.23)}.btn-primary:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}.btn-secondary{height:38px;background:#fff;color:var(--navy);border:1px solid #cbd9e3}.btn-secondary:hover{background:#f4f8fb}.btn-blue{background:var(--navy);color:white}.btn-danger{color:var(--red)}
+    .message{display:none;margin-top:14px;padding:12px 14px;border-radius:10px;font-size:12px;line-height:1.45}.message.show{display:block}.message.info{background:#edf6fc;border:1px solid #c7e1f1;color:#205f8b}.message.success{background:#edf9f3;border:1px solid #bfe2cf;color:#156643}.message.error{background:#fff0f1;border:1px solid #efc6ca;color:#912b35}.message.warning{background:#fff8e9;border:1px solid #f0d49b;color:#815a0f}
+    #results{display:none}#results.show{display:block}.results-space{margin-top:18px}
+    .quality-banner{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:start;padding:15px 17px;background:#eff7fb;border:1px solid #c8e2ef;border-radius:14px;color:#28566f}.quality-banner .ico{font-size:22px}.quality-banner strong{color:var(--navy)}.quality-banner p{margin:3px 0 0;font-size:11px;line-height:1.5}
+    .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:14px}.kpi{min-height:112px;padding:16px;position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;right:-25px;bottom:-32px;width:78px;height:78px;border-radius:50%;background:rgba(0,119,190,.07)}.kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.055em;color:var(--muted);font-weight:800}.kpi .value{margin-top:10px;font-size:27px;font-weight:900;color:var(--navy);letter-spacing:-.5px}.kpi .small{margin-top:5px;font-size:10px;color:var(--muted);line-height:1.35}.kpi.good .value{color:var(--green)}.kpi.bad .value{color:var(--red)}.kpi.warn .value{color:var(--yellow)}
+    .split{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,.8fr);gap:15px;margin-top:15px}.panel{padding:18px}.panel h3{margin:0;color:var(--navy);font-size:16px}.panel .note{margin:5px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
+    .rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.rate-card{padding:13px;border:1px solid var(--line);border-radius:12px;background:#fbfdff}.rate-head{display:flex;justify-content:space-between;gap:8px;color:var(--navy);font-size:11px;font-weight:800}.rate-values{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.rate-values span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;font-weight:800}.rate-values strong{display:block;margin-top:3px;font-size:17px}.bar{height:6px;margin-top:10px;border-radius:99px;background:#e7eef3;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--teal))}
+    .status-list{margin-top:12px;display:grid;gap:8px}.status-row{display:flex;justify-content:space-between;gap:12px;padding:9px 10px;background:#f8fafc;border-radius:9px;font-size:11px}.status-row strong{color:var(--navy)}
+    details.mapping{margin-top:15px}details.mapping>summary{list-style:none;padding:16px 18px;cursor:pointer;color:var(--navy);font-weight:850;font-size:13px;display:flex;justify-content:space-between}details.mapping>summary::-webkit-details-marker{display:none}details.mapping>summary:after{content:"+";font-size:18px;color:var(--blue)}details.mapping[open]>summary:after{content:"−"}.mapping-inner{padding:0 18px 18px;border-top:1px solid var(--line)}.mapping-inner p{font-size:11px;color:var(--muted);line-height:1.45}.mapping-scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:10px}.mapping-scroll select{width:100%;min-width:245px;border:1px solid #cbd9e3;border-radius:8px;padding:7px;background:white}.confidence{display:inline-flex;padding:4px 7px;border-radius:99px;font-size:9px;font-weight:850}.confidence.high{background:#eaf7f0;color:#146945}.confidence.medium{background:#fff4dc;color:#8a5b08}.confidence.low{background:#ffedef;color:#9a2e38}
+    .table-card{margin-top:15px;overflow:hidden}.table-toolbar{padding:15px 17px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line)}.toolbar-title h3{margin:0;color:var(--navy);font-size:16px}.toolbar-title p{margin:4px 0 0;font-size:10px;color:var(--muted)}.toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.search,.filter{height:38px;border:1px solid #cbd9e3;border-radius:9px;padding:0 10px;background:white;font-size:11px}.search{min-width:235px}.table-scroll{overflow:auto;max-height:620px}table{width:100%;border-collapse:collapse;min-width:980px}th{position:sticky;top:0;z-index:2;background:#f1f5f8;color:#536777;text-align:left;padding:10px 11px;border-bottom:1px solid var(--line);font-size:9px;text-transform:uppercase;letter-spacing:.045em}td{padding:10px 11px;border-bottom:1px solid #edf1f4;font-size:11px;vertical-align:middle}tbody tr:hover{background:#f8fbfd}.num{text-align:right;font-variant-numeric:tabular-nums}.worker-link{padding:0;border:0;background:none;color:var(--navy);font-weight:850;text-align:left;text-decoration:underline;text-decoration-color:#9fc3d8;text-underline-offset:3px}.worker-link:hover{color:var(--blue)}.status-pill{display:inline-flex;align-items:center;justify-content:center;padding:5px 8px;border-radius:99px;font-size:9px;font-weight:850;white-space:nowrap}.st-good{background:#e9f7f0;color:#126a47}.st-review{background:#fff4df;color:#8c5c08}.st-form{background:#eaf4fb;color:#1f648f}.st-sap{background:#f3ecf9;color:#6b3d90}.st-unmatched{background:#ffedef;color:#982e38}.row-review{background:#fffdf8}.row-danger{background:#fffafb}.empty{padding:30px;text-align:center;color:var(--muted)}.pager{padding:11px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}.pager-buttons{display:flex;gap:6px}.pager-buttons button{width:33px;height:31px;border-radius:8px;border:1px solid #cbd9e3;background:#fff;color:var(--navy)}.pager-buttons button:disabled{opacity:.4;cursor:not-allowed}
+    .report-card{margin-top:15px;padding:19px}.report-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.report-preview{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:#fcfdfe;padding:18px;line-height:1.5;font-size:12px;max-height:520px;overflow:auto}.report-preview h4{margin:0 0 6px;color:var(--navy);font-size:16px}.report-preview h5{margin:16px 0 6px;color:var(--navy2);font-size:12px}.report-preview ul{margin:6px 0 0 18px;padding:0}.report-preview li{margin:4px 0}.report-meta{font-size:10px;color:var(--muted)}
+    .method{margin-top:15px;padding:16px 18px;box-shadow:none}.method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.method-item strong{display:block;color:var(--navy);font-size:11px;margin-bottom:4px}.method-item span{font-size:10px;color:var(--muted);line-height:1.45}
+    footer{text-align:center;padding:25px 0 0;color:#778795;font-size:10px}
+    .loading{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,31,54,.43);backdrop-filter:blur(3px);z-index:100}.loading.show{display:flex}.loader-box{min-width:300px;background:white;border-radius:15px;padding:23px;box-shadow:var(--shadow);text-align:center}.spinner{width:38px;height:38px;margin:0 auto 12px;border:4px solid #dce8ef;border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.loader-box strong{color:var(--navy);font-size:13px}.loader-box p{margin:6px 0 0;color:var(--muted);font-size:10px}
+    .modal{position:fixed;inset:0;background:rgba(3,29,51,.55);display:none;align-items:center;justify-content:center;padding:24px;z-index:90}.modal.show{display:flex}.modal-card{width:min(1180px,100%);max-height:92vh;background:white;border-radius:18px;box-shadow:0 20px 70px rgba(0,0,0,.22);overflow:hidden;display:flex;flex-direction:column}.modal-head{padding:18px 21px;display:flex;justify-content:space-between;align-items:flex-start;gap:15px;border-bottom:1px solid var(--line)}.modal-head h2{margin:0;color:var(--navy);font-size:20px}.modal-head p{margin:5px 0 0;color:var(--muted);font-size:11px}.modal-close{width:36px;height:36px;border:0;border-radius:10px;background:#eef3f7;color:var(--navy);font-size:20px}.modal-body{padding:18px 21px;overflow:auto}.modal-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.mini-kpi{padding:12px;border:1px solid var(--line);border-radius:11px;background:#f9fbfd}.mini-kpi span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:800}.mini-kpi strong{display:block;margin-top:5px;color:var(--navy);font-size:19px}.modal-actions{padding:13px 21px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+    @media(max-width:1180px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.controls{grid-template-columns:repeat(3,1fr)}.controls .btn{width:100%}.split{grid-template-columns:1fr}}
+    @media(max-width:820px){.shell{padding:14px}.hero{align-items:flex-start;flex-direction:column;padding:20px}.privacy{max-width:none;width:100%}.divider{display:none}.upload-grid{grid-template-columns:1fr}.dropzone{align-items:flex-start;flex-direction:column}.controls{grid-template-columns:1fr 1fr}.kpi-grid{grid-template-columns:1fr 1fr}.rate-grid,.method-grid{grid-template-columns:1fr}.table-toolbar,.report-head{align-items:stretch;flex-direction:column}.modal-kpis{grid-template-columns:1fr 1fr}.brandmark{min-width:120px}}
+    @media print{body{background:#fff}.topline,.hero,.upload-card,.quality-banner,.kpi-grid,.split,.mapping,.table-card,.method,footer,.report-head .toolbar-actions{display:none!important}.shell{max-width:none;padding:0}.report-card{border:0;box-shadow:none;margin:0;padding:0}.report-preview{border:0;max-height:none;overflow:visible;padding:0}}
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="container hero">
-      <div>
-        <div class="brand-line"><span class="brand-mark"></span> Control de horas extras</div>
-        <h1>Comparador BD.HE versus SAP</h1>
-        <p class="subtitle">Carga ambos Excel, selecciona el período y valida automáticamente si las horas aprobadas del formulario coinciden con las registradas en SAP por trabajador, fecha y porcentaje de recargo.</p>
-      </div>
-      <div class="privacy-pill">
-        <strong>Procesamiento local</strong>
-        Los archivos se analizan dentro de este navegador. La página no envía los datos a un servidor.
-      </div>
+<div class="topline"></div>
+<main class="shell">
+  <section class="hero">
+    <div class="brand">
+      <div class="brandmark"><div class="logo">transelec</div><div class="tag">Conectamos las energías del futuro</div></div>
+      <div class="divider"></div>
+      <div><h1>Conciliación de horas extras</h1><p class="subtitle">Compara las horas aprobadas del formulario BD.HE con las horas extras de SAP por trabajador, fecha y recargo. SAP considera únicamente 50%, 75% y 100%; las horas normales se excluyen automáticamente.</p></div>
     </div>
-  </header>
+    <div class="privacy"><span class="privacy-icon">🔒</span><span>Los archivos se procesan de manera local en este navegador y no se envían a ningún servidor.</span></div>
+  </section>
 
-  <main class="container">
-    <section class="card workspace no-print">
-      <div class="section-head">
-        <div>
-          <h2><span class="step">1</span>Cargar archivos y definir período</h2>
-          <p>La estructura se detecta automáticamente, incluso cuando el encabezado de BD.HE no está en la primera fila.</p>
-        </div>
-      </div>
+  <section class="card upload-card">
+    <div class="section-head"><div><h2><span class="step">1</span>Cargar archivos y seleccionar período</h2><p>BD.HE puede contener varias hojas. La página reconoce y consolida automáticamente todas las hojas válidas.</p></div></div>
+    <div class="upload-grid">
+      <div class="dropzone" id="bdDrop"><div class="drop-info"><div class="file-icon">BD.HE</div><div><h3>Formulario de horas extras</h3><p id="bdMeta">Carga el archivo que contiene los registros, estados de aprobación, fechas, horas y porcentajes.</p></div></div><label class="file-label" for="bdFile">Seleccionar BD.HE</label><input id="bdFile" type="file" accept=".xlsx,.xlsm" /></div>
+      <div class="dropzone" id="sapDrop"><div class="drop-info"><div class="file-icon sap">SAP</div><div><h3>Exportación de SAP</h3><p id="sapMeta">Carga la exportación. Solo se conservarán las clases 1214, 1215 y 1216, equivalentes a 50%, 75% y 100%.</p></div></div><label class="file-label" for="sapFile">Seleccionar SAP</label><input id="sapFile" type="file" accept=".xlsx,.xlsm" /></div>
+    </div>
+    <div class="controls">
+      <div class="field"><label for="yearSelect">Año</label><select id="yearSelect"><option value="">—</option></select></div>
+      <div class="field"><label for="monthSelect">Mes</label><select id="monthSelect"><option value="">—</option></select></div>
+      <div class="field"><label for="tolerance">Tolerancia por línea</label><input id="tolerance" type="number" min="0" step="0.01" value="0.02" title="0,02 horas equivale aproximadamente a 1,2 minutos" /></div>
+      <label class="switchbox"><input id="approvedOnly" type="checkbox" checked />Comparar solo estados aprobados en BD.HE</label>
+      <button class="btn btn-primary" id="compareBtn" disabled>Comparar archivos</button>
+    </div>
+    <div class="message" id="messageBox"></div>
+  </section>
 
-      <div class="upload-grid">
-        <div class="upload-box" id="bdDrop">
-          <div>
-            <div class="upload-title">
-              <div class="file-icon">HE</div>
-              <div>
-                <h3>Formulario BD.HE</h3>
-                <p>Debe contener RUT, fecha, horas, porcentaje y estado.</p>
-              </div>
-            </div>
-            <div class="file-meta" id="bdMeta">Ningún archivo seleccionado</div>
-          </div>
-          <label class="file-label" for="bdFile">Seleccionar BD.HE</label>
-          <input type="file" id="bdFile" accept=".xlsx,.xls,.xlsm" />
-        </div>
+  <section id="results" class="results-space">
+    <div class="quality-banner"><div class="ico">✓</div><div><strong>Control de lectura aplicado</strong><p id="qualityText"></p></div></div>
+    <div class="kpi-grid">
+      <article class="card kpi"><div class="label">Trabajadores analizados</div><div class="value" id="kpiWorkers">0</div><div class="small">Personas presentes en al menos una fuente</div></article>
+      <article class="card kpi good"><div class="label">Trabajadores conformes</div><div class="value" id="kpiGood">0</div><div class="small">Coincidencia por fecha, recargo y horas</div></article>
+      <article class="card kpi bad"><div class="label">Trabajadores a revisar</div><div class="value" id="kpiReview">0</div><div class="small">Con una o más inconcordancias</div></article>
+      <article class="card kpi"><div class="label">Horas aprobadas BD.HE</div><div class="value" id="kpiBd">0,00</div><div class="small" id="kpiBdRows">0 registros</div></article>
+      <article class="card kpi"><div class="label">Horas extras SAP</div><div class="value" id="kpiSap">0,00</div><div class="small" id="kpiSapRows">0 registros 50%, 75% o 100%</div></article>
+      <article class="card kpi warn"><div class="label">Diferencia neta SAP − BD.HE</div><div class="value" id="kpiDiff">0,00</div><div class="small">El estado final se valida línea por línea</div></article>
+    </div>
 
-        <div class="upload-box" id="sapDrop">
-          <div>
-            <div class="upload-title">
-              <div class="file-icon">SAP</div>
-              <div>
-                <h3>Horas extraídas desde SAP</h3>
-                <p>Debe contener nombre, fecha, horas y clase 1214/1215/1216.</p>
-              </div>
-            </div>
-            <div class="file-meta" id="sapMeta">Ningún archivo seleccionado</div>
-          </div>
-          <label class="file-label" for="sapFile">Seleccionar archivo SAP</label>
-          <input type="file" id="sapFile" accept=".xlsx,.xls,.xlsm" />
-        </div>
-      </div>
+    <div class="split">
+      <article class="card panel"><h3>Comparación por porcentaje de recargo</h3><p class="note">Resumen de horas consideradas en cada fuente para el período seleccionado.</p><div class="rate-grid" id="rateGrid"></div></article>
+      <article class="card panel"><h3>Estados del formulario</h3><p class="note">Distribución de todos los registros BD.HE del período antes de aplicar el filtro.</p><div class="status-list" id="statusList"></div></article>
+    </div>
 
-      <div class="control-panel">
-        <div class="controls">
-          <div class="field">
-            <label for="yearSelect">Año</label>
-            <select id="yearSelect"><option value="">Seleccione</option></select>
-          </div>
-          <div class="field">
-            <label for="monthSelect">Mes</label>
-            <select id="monthSelect">
-              <option value="">Seleccione</option>
-              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="tolerance">Tolerancia (horas)</label>
-            <input id="tolerance" type="number" min="0" max="1" step="0.01" value="0.05" title="0,05 horas equivalen a 3 minutos" />
-          </div>
-          <div class="field">
-            <label>Filtro del formulario</label>
-            <div class="switch-field"><input id="approvedOnly" type="checkbox" checked /> <span>Comparar solo registros aprobados</span></div>
-          </div>
-          <button class="primary-btn" id="compareBtn" disabled>Comparar archivos</button>
-        </div>
-        <div class="message" id="messageBox"></div>
-      </div>
+    <details class="card mapping" id="mappingDetails"><summary>Equivalencias de nombres BD.HE → SAP</summary><div class="mapping-inner"><p>SAP puede incluir segundos nombres que no aparecen en el formulario. Las equivalencias se proponen automáticamente; modifica solamente las asociaciones dudosas y vuelve a aplicar.</p><div class="mapping-scroll"><table><thead><tr><th>Nombre BD.HE</th><th>Nombre asociado en SAP</th><th>Confianza</th></tr></thead><tbody id="mappingBody"></tbody></table></div><div style="margin-top:11px"><button class="btn btn-secondary" id="applyMappings">Aplicar equivalencias</button></div></div></details>
+
+    <section class="card table-card">
+      <div class="table-toolbar"><div class="toolbar-title"><h3>Resumen por trabajador</h3><p id="summaryCount">0 trabajadores</p></div><div class="toolbar-actions"><input class="search" id="summarySearch" placeholder="Buscar trabajador..." /><select class="filter" id="summaryStatus"><option value="Todos">Todos los estados</option><option value="Conforme">Conformes</option><option value="Revisar">A revisar</option></select></div></div>
+      <div class="table-scroll"><table><thead><tr><th>Trabajador</th><th>Nombre BD.HE</th><th>Nombre SAP</th><th class="num">Horas BD.HE</th><th class="num">Horas SAP</th><th class="num">Diferencia</th><th class="num">Incidencias</th><th>Estado</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody id="summaryBody"></tbody></table></div>
+      <div class="pager"><span id="summaryPageInfo"></span><div class="pager-buttons"><button id="summaryPrev">‹</button><button id="summaryNext">›</button></div></div>
     </section>
 
-    <section id="results" class="results-space">
-      <div class="kpi-grid">
-        <article class="card kpi"><div class="label">Trabajadores analizados</div><div class="value" id="kpiWorkers">0</div><div class="small">Con horas en uno o ambos archivos</div></article>
-        <article class="card kpi good"><div class="label">Trabajadores conformes</div><div class="value" id="kpiGood">0</div><div class="small">Sin diferencias de fecha, recargo u horas</div></article>
-        <article class="card kpi bad"><div class="label">Trabajadores a revisar</div><div class="value" id="kpiReview">0</div><div class="small">Con al menos una incongruencia</div></article>
-        <article class="card kpi"><div class="label">Horas aprobadas BD.HE</div><div class="value" id="kpiBd">0,00</div><div class="small" id="kpiBdRows">0 registros considerados</div></article>
-        <article class="card kpi"><div class="label">Horas extras SAP</div><div class="value" id="kpiSap">0,00</div><div class="small" id="kpiSapRows">0 registros considerados</div></article>
-        <article class="card kpi warn"><div class="label">Diferencia neta SAP − BD.HE</div><div class="value" id="kpiDiff">0,00</div><div class="small">La validación final se realiza por detalle</div></article>
-      </div>
-
-      <div class="grid-2">
-        <article class="card panel">
-          <h3>Comparación por porcentaje de recargo</h3>
-          <p class="panel-sub">Los totales se muestran separados para evitar compensaciones entre horas al 50%, 75% y 100%.</p>
-          <div class="rate-grid" id="rateGrid"></div>
-          <div class="legend">
-            <span class="badge good">Conforme</span><span class="badge diff">Diferencia</span><span class="badge form">Solo formulario</span><span class="badge sap">Solo SAP</span><span class="badge unmatched">Sin asociación</span>
-          </div>
-        </article>
-        <article class="card panel">
-          <h3>Control de registros</h3>
-          <p class="panel-sub">Resumen de estados detectados en el formulario durante el período seleccionado.</p>
-          <div id="stateSummary" style="margin-top:15px"></div>
-        </article>
-      </div>
-
-      <details class="card mapping-card no-print" id="mappingDetails">
-        <summary>Equivalencias de nombres BD.HE → SAP</summary>
-        <div class="mapping-content">
-          <p class="mapping-note">SAP utiliza un número de personal diferente al RUT del formulario. Por eso la relación se propone mediante el nombre normalizado. Revisa las asociaciones de confianza media o baja y luego presiona <strong>Aplicar equivalencias</strong>.</p>
-          <div class="mapping-table-wrap">
-            <table class="mapping-table">
-              <thead><tr><th>Nombre en BD.HE</th><th>Nombre asociado en SAP</th><th>Confianza</th></tr></thead>
-              <tbody id="mappingBody"></tbody>
-            </table>
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="secondary-btn" id="applyMappings">Aplicar equivalencias</button></div>
-        </div>
-      </details>
-
-      <section class="card table-card summary-card">
-        <div class="table-toolbar">
-          <div class="toolbar-left"><h3>Resumen por trabajador</h3><p id="summaryCount">0 trabajadores</p></div>
-          <div class="toolbar-actions no-print">
-            <input class="search" id="summarySearch" placeholder="Buscar trabajador..." />
-            <select class="filter-select" id="summaryStatus"><option value="Todos">Todos los estados</option><option value="Conforme">Conformes</option><option value="Revisar">A revisar</option></select>
-          </div>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>Trabajador</th><th>Nombre BD.HE</th><th>Nombre SAP</th><th class="num">Horas BD.HE</th><th class="num">Horas SAP</th><th class="num">Diferencia</th><th class="num">Incidencias</th><th>Estado</th><th>Resultado</th></tr></thead>
-            <tbody id="summaryBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination"><span id="summaryPageInfo"></span><div class="page-buttons"><button id="summaryPrev">‹</button><button id="summaryNext">›</button></div></div>
-      </section>
-
-      <section class="card table-card detail-card">
-        <div class="table-toolbar">
-          <div class="toolbar-left"><h3>Detalle de conciliación</h3><p id="detailCount">0 combinaciones trabajador-fecha-recargo</p></div>
-          <div class="toolbar-actions no-print">
-            <input class="search" id="detailSearch" placeholder="Buscar trabajador o fecha..." />
-            <select class="filter-select" id="detailStatus"><option value="Todos">Todos los estados</option><option value="Conforme">Conforme</option><option value="Diferencia">Diferencia</option><option value="Solo formulario">Solo formulario</option><option value="Solo SAP">Solo SAP</option><option value="Sin asociación">Sin asociación</option></select>
-          </div>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>Fecha</th><th>Trabajador</th><th>Recargo</th><th class="num">Horas BD.HE</th><th class="num">Horas SAP</th><th class="num">Diferencia</th><th>Estado</th><th>Observación</th></tr></thead>
-            <tbody id="detailBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination"><span id="detailPageInfo"></span><div class="page-buttons"><button id="detailPrev">‹</button><button id="detailNext">›</button></div></div>
-      </section>
-
-      <section class="card report-card">
-        <div class="report-head">
-          <div><h3 style="margin:0;color:var(--navy)">Informe final automático</h3><p class="panel-sub">Texto preparado para revisión, respaldo o envío.</p></div>
-          <div class="report-actions no-print">
-            <button class="secondary-btn" id="copyReport">Copiar informe</button>
-            <button class="secondary-btn" id="exportExcel">Descargar Excel</button>
-            <button class="secondary-btn" id="printReport">Guardar como PDF</button>
-          </div>
-        </div>
-        <div class="report-body" id="reportBody"></div>
-      </section>
-
-      <section class="card method">
-        <div class="method-grid">
-          <div class="method-item"><strong>Unidad de comparación</strong><span>Trabajador + fecha + recargo 50%, 75% o 100%.</span></div>
-          <div class="method-item"><strong>Clases SAP</strong><span>1214 = 50%, 1215 = 75%, 1216 = 100%.</span></div>
-          <div class="method-item"><strong>Estado BD.HE</strong><span>Por defecto se consideran únicamente registros “Aprobada”.</span></div>
-          <div class="method-item"><strong>Tolerancia</strong><span>0,05 horas equivale a 3 minutos y absorbe diferencias como 23:59 versus 24:00.</span></div>
-        </div>
-      </section>
+    <section class="card table-card">
+      <div class="table-toolbar"><div class="toolbar-title"><h3>Detalle general de conciliación</h3><p id="detailCount">0 combinaciones trabajador-fecha-recargo</p></div><div class="toolbar-actions"><input class="search" id="detailSearch" placeholder="Buscar trabajador o fecha..." /><select class="filter" id="detailStatus"><option value="Todos">Todos los estados</option><option value="Conforme">Conforme</option><option value="Diferencia">Diferencia</option><option value="Solo formulario">Solo formulario</option><option value="Solo SAP">Solo SAP</option><option value="Sin asociación">Sin asociación</option></select></div></div>
+      <div class="table-scroll"><table><thead><tr><th>Fecha</th><th>Trabajador</th><th>Recargo</th><th class="num">Horas BD.HE</th><th class="num">Horas SAP</th><th class="num">Diferencia</th><th>Estado</th><th>Observación</th></tr></thead><tbody id="detailBody"></tbody></table></div>
+      <div class="pager"><span id="detailPageInfo"></span><div class="pager-buttons"><button id="detailPrev">‹</button><button id="detailNext">›</button></div></div>
     </section>
 
-    <footer>Comparador de horas extras · BD.HE / SAP · Procesamiento local en el navegador</footer>
-  </main>
+    <section class="card report-card"><div class="report-head"><div><h3 style="margin:0;color:var(--navy);font-size:17px">Informe ejecutivo</h3><p style="margin:5px 0 0;color:var(--muted);font-size:11px">El PDF incluye resumen por trabajador y detalle de todas las diferencias.</p></div><div class="toolbar-actions"><button class="btn btn-secondary" id="exportCsv">Descargar CSV</button><button class="btn btn-blue" id="downloadPdf">Descargar informe PDF</button></div></div><div class="report-preview" id="reportPreview"></div></section>
 
-  <div class="loading-overlay" id="loading"><div class="loader-box"><div class="spinner"></div><strong id="loadingText">Procesando archivos...</strong></div></div>
+    <section class="card method"><div class="method-grid"><div class="method-item"><strong>Unidad de comparación</strong><span>Trabajador + fecha corregida + recargo 50%, 75% o 100%.</span></div><div class="method-item"><strong>Lectura BD.HE</strong><span>Se consolidan todas las hojas reconocidas, no solamente la primera.</span></div><div class="method-item"><strong>Período BD.HE</strong><span>Se utilizan las columnas MES y Año; las fechas ambiguas dd/mm se normalizan.</span></div><div class="method-item"><strong>Registros SAP</strong><span>Se excluyen horas normales. Solo 1214, 1215 y 1216 o textos equivalentes.</span></div></div></section>
+  </section>
+  <footer>Portal de conciliación de horas extras · Transelec · Procesamiento local</footer>
+</main>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';"></script>
-  <script>
-  (() => {
-    'use strict';
+<div class="loading" id="loading"><div class="loader-box"><div class="spinner"></div><strong id="loadingTitle">Procesando archivos...</strong><p id="loadingDetail">Esto puede tardar algunos segundos.</p></div></div>
 
-    const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    const PAGE_SIZE_SUMMARY = 25;
-    const PAGE_SIZE_DETAIL = 80;
+<div class="modal" id="workerModal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><div><h2 id="modalWorker">Detalle del trabajador</h2><p id="modalNames"></p></div><button class="modal-close" id="modalClose" aria-label="Cerrar">×</button></div><div class="modal-body"><div class="modal-kpis"><div class="mini-kpi"><span>Horas BD.HE</span><strong id="modalBd">0,00</strong></div><div class="mini-kpi"><span>Horas SAP</span><strong id="modalSap">0,00</strong></div><div class="mini-kpi"><span>Diferencia</span><strong id="modalDiff">0,00</strong></div><div class="mini-kpi"><span>Estado</span><strong id="modalStatus" style="font-size:15px">—</strong></div></div><div class="table-scroll" style="max-height:52vh;border:1px solid var(--line);border-radius:11px"><table style="min-width:850px"><thead><tr><th>Fecha</th><th>Recargo</th><th class="num">Formulario BD.HE</th><th class="num">SAP</th><th class="num">Diferencia</th><th>Estado</th><th>Observación</th></tr></thead><tbody id="modalBody"></tbody></table></div></div><div class="modal-actions"><button class="btn btn-secondary" id="workerPdf">Descargar detalle PDF</button><button class="btn btn-blue" id="modalClose2">Cerrar</button></div></div></div>
 
-    const state = {
-      bd: null,
-      sap: null,
-      results: null,
-      mappings: {},
-      mappingMeta: {},
-      summaryPage: 1,
-      detailPage: 1
-    };
+<script>
+(() => {
+'use strict';
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const $=id=>document.getElementById(id);
+const state={bd:null,sap:null,results:null,mappings:{},mappingMeta:{},summaryPage:1,detailPage:1,activeWorker:null};
+const SUMMARY_PAGE=30, DETAIL_PAGE=100;
 
-    const $ = id => document.getElementById(id);
+function normalizeText(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u00a0/g,' ').toUpperCase().replace(/[^A-Z0-9% ]+/g,' ').replace(/\s+/g,' ').trim()}
+function normalizeHeader(value){return normalizeText(value).replace(/%/g,'').replace(/\s+/g,' ').trim()}
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function formatHours(value){return Number(value||0).toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function signedHours(value){const n=Number(value||0);return (n>0?'+':'')+formatHours(n)}
+function formatDate(iso){if(!iso)return '—';const [y,m,d]=iso.split('-');return `${d}-${m}-${y}`}
+function isApprovedStatus(value){return normalizeText(value).startsWith('APROBAD')}
+function showMessage(text,type='info'){const b=$('messageBox');b.textContent=text;b.className=`message show ${type}`}
+function clearMessage(){const b=$('messageBox');b.textContent='';b.className='message'}
+function showLoading(title,detail='Esto puede tardar algunos segundos.'){ $('loadingTitle').textContent=title;$('loadingDetail').textContent=detail;$('loading').classList.add('show')}
+function hideLoading(){$('loading').classList.remove('show')}
+function validDate(y,m,d){const dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()+1===m&&dt.getUTCDate()===d}
+function isoDate(y,m,d){return `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+function uniqueSorted(values){return [...new Set(values.filter(v=>v!==null&&v!==undefined&&v!==''))].sort((a,b)=>typeof a==='number'&&typeof b==='number'?a-b:String(a).localeCompare(String(b),'es'))}
 
-    function showLoading(text = 'Procesando archivos...') {
-      $('loadingText').textContent = text;
-      $('loading').classList.add('show');
-    }
-    function hideLoading() { $('loading').classList.remove('show'); }
+/* Lector XLSX sin dependencias externas. */
+class ZipReader{
+  constructor(buffer){this.buffer=buffer;this.bytes=new Uint8Array(buffer);this.view=new DataView(buffer);this.entries=new Map();this.parseCentralDirectory()}
+  u16(o){return this.view.getUint16(o,true)} u32(o){return this.view.getUint32(o,true)}
+  parseCentralDirectory(){let eocd=-1;const min=Math.max(0,this.bytes.length-65557);for(let i=this.bytes.length-22;i>=min;i--){if(this.u32(i)===0x06054b50){eocd=i;break}}if(eocd<0)throw new Error('El archivo no parece ser un XLSX válido.');const count=this.u16(eocd+10);let pos=this.u32(eocd+16);const dec=new TextDecoder('utf-8');for(let i=0;i<count;i++){if(this.u32(pos)!==0x02014b50)throw new Error('No fue posible leer la estructura interna del XLSX.');const flags=this.u16(pos+8),method=this.u16(pos+10),compSize=this.u32(pos+20),uncompSize=this.u32(pos+24),nameLen=this.u16(pos+28),extraLen=this.u16(pos+30),commentLen=this.u16(pos+32),localOffset=this.u32(pos+42);const name=dec.decode(this.bytes.slice(pos+46,pos+46+nameLen));this.entries.set(name,{name,flags,method,compSize,uncompSize,localOffset});pos+=46+nameLen+extraLen+commentLen}}
+  has(name){return this.entries.has(name)}
+  async get(name){const e=this.entries.get(name);if(!e)throw new Error(`No se encontró ${name} dentro del XLSX.`);const o=e.localOffset;if(this.u32(o)!==0x04034b50)throw new Error('Cabecera ZIP inválida.');const nameLen=this.u16(o+26),extraLen=this.u16(o+28),start=o+30+nameLen+extraLen;const compressed=this.bytes.slice(start,start+e.compSize);if(e.method===0)return compressed;if(e.method===8){if(typeof DecompressionStream==='undefined')throw new Error('El navegador no permite descomprimir XLSX. Utiliza Microsoft Edge o Google Chrome actualizado.');const stream=new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return new Uint8Array(await new Response(stream).arrayBuffer())}throw new Error(`Método de compresión XLSX no compatible: ${e.method}`)}
+  async text(name){return new TextDecoder('utf-8').decode(await this.get(name))}
+}
+function parseXml(text,label){const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.getElementsByTagName('parsererror')[0];if(err)throw new Error(`No fue posible leer ${label}.`);return doc}
+function colIndex(ref){const m=String(ref||'').match(/^([A-Z]+)\d+$/i);if(!m)return 0;let n=0;for(const ch of m[1].toUpperCase())n=n*26+ch.charCodeAt(0)-64;return n-1}
+function cellValue(cell,shared){const t=cell.getAttribute('t')||'';if(t==='inlineStr'){const ts=cell.getElementsByTagName('t');return Array.from(ts).map(x=>x.textContent||'').join('')}const v=cell.getElementsByTagName('v')[0];if(!v)return '';const raw=v.textContent??'';if(t==='s')return shared[Number(raw)]??'';if(t==='str'||t==='d'||t==='e')return raw;if(t==='b')return raw==='1';const n=Number(raw);return Number.isFinite(n)?n:raw}
+async function readXlsx(file,progress){const zip=new ZipReader(await file.arrayBuffer());const workbookDoc=parseXml(await zip.text('xl/workbook.xml'),'el libro Excel');const relDoc=parseXml(await zip.text('xl/_rels/workbook.xml.rels'),'las relaciones del libro');const rels={};Array.from(relDoc.getElementsByTagName('Relationship')).forEach(r=>rels[r.getAttribute('Id')]=r.getAttribute('Target'));
+  let shared=[];if(zip.has('xl/sharedStrings.xml')){progress?.('Leyendo textos compartidos...');const sharedDoc=parseXml(await zip.text('xl/sharedStrings.xml'),'los textos del libro');shared=Array.from(sharedDoc.getElementsByTagName('si')).map(si=>Array.from(si.getElementsByTagName('t')).map(t=>t.textContent||'').join(''))}
+  const sheets=[];const nodes=Array.from(workbookDoc.getElementsByTagName('sheet'));for(let i=0;i<nodes.length;i++){const node=nodes[i],name=node.getAttribute('name')||`Hoja ${i+1}`;const rid=node.getAttribute('r:id')||node.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');let target=rels[rid];if(!target)continue;target=target.replace(/^\//,'');if(!target.startsWith('xl/'))target='xl/'+target.replace(/^\.\//,'');if(!zip.has(target))continue;progress?.(`Leyendo hoja ${i+1} de ${nodes.length}: ${name}`);const doc=parseXml(await zip.text(target),`la hoja ${name}`);const rows=[];for(const rowNode of Array.from(doc.getElementsByTagName('row'))){const rnum=Number(rowNode.getAttribute('r')||rows.length+1);const arr=[];for(const c of Array.from(rowNode.getElementsByTagName('c'))){arr[colIndex(c.getAttribute('r'))]=cellValue(c,shared)}rows[rnum-1]=arr}sheets.push({name,rows})}
+  return {sheets};
+}
 
-    function showMessage(text, type = 'info') {
-      const box = $('messageBox');
-      box.textContent = text;
-      box.className = `message show ${type}`;
-    }
-    function clearMessage() { $('messageBox').className = 'message'; $('messageBox').textContent = ''; }
+function excelSerialParts(serial){if(!Number.isFinite(Number(serial)))return null;let days=Math.floor(Number(serial));if(days>=60)days-=1;const dt=new Date(Date.UTC(1899,11,31)+days*86400000);return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()}}
+function rawDateParts(value,periodYear,periodMonth){if(value==null||value==='')return null;if(value instanceof Date&&!isNaN(value))return {y:value.getFullYear(),m:value.getMonth()+1,d:value.getDate(),kind:'date'};if(typeof value==='number')return {...excelSerialParts(value),kind:'serial'};const s=String(value).trim();let m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);if(m)return {y:+m[1],m:+m[2],d:+m[3],kind:'iso'};m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);if(m){const a=+m[1],b=+m[2],y=+m[3];if(periodMonth&&a===periodMonth&&validDate(y,a,b))return {y,m:a,d:b,kind:'string-month-first'};if(periodMonth&&b===periodMonth&&validDate(y,b,a))return {y,m:b,d:a,kind:'string-day-first'};if(a>12&&validDate(y,b,a))return {y,m:b,d:a,kind:'string-day-first'};if(b>12&&validDate(y,a,b))return {y,m:a,d:b,kind:'string-month-first'};if(validDate(y,b,a))return {y,m:b,d:a,kind:'string-day-first'}}return null}
+function correctBdDate(value,periodYear,periodMonth){const p=rawDateParts(value,periodYear,periodMonth);if(!p)return {iso:null,quality:'invalid'};const y=Number(periodYear)||p.y,m=Number(periodMonth)||p.m;if(validDate(y,m,p.d)&&p.m===m)return {iso:isoDate(y,m,p.d),quality:p.kind.startsWith('string')?'direct-string':'direct'};if(p.d===m&&validDate(y,m,p.m))return {iso:isoDate(y,m,p.m),quality:'swapped-day-month'};if(validDate(y,m,p.d))return {iso:isoDate(y,m,p.d),quality:'period-corrected'};return {iso:null,quality:'invalid'} }
+function parseSapDate(value){const p=rawDateParts(value);return p&&validDate(p.y,p.m,p.d)?isoDate(p.y,p.m,p.d):null}
+function parseHours(value){if(value==null||value==='')return 0;if(value instanceof Date&&!isNaN(value))return value.getHours()+value.getMinutes()/60+value.getSeconds()/3600;if(typeof value==='number')return value>=0&&value<1?value*24:value;const s=String(value).trim().replace(',','.');let m=s.match(/^(\d{1,3}):(\d{1,2})(?::(\d{1,2}))?$/);if(m)return +m[1]+(+m[2])/60+(+m[3]||0)/3600;const n=Number(s.replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?(n>=0&&n<1?n*24:n):0}
+function parseSapHours(value){if(value==null||value==='')return 0;if(typeof value==='number')return value;const s=String(value).trim().replace(',','.');const m=s.match(/^(\d{1,3}):(\d{1,2})(?::(\d{1,2}))?$/);if(m)return +m[1]+(+m[2])/60+(+m[3]||0)/3600;const n=Number(s.replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?n:0}
+function rateFromBd(value){if(value==null||value==='')return '';const s=String(value).trim().replace(',','.');if(s.includes('%')){const n=Number(s.replace(/[^0-9.]/g,''));if(Number.isFinite(n))return `${Math.round(n)}%`}const n=Number(s);if(!Number.isFinite(n))return '';if(Math.abs(n-.5)<.02||Math.abs(n-50)<.2)return '50%';if(Math.abs(n-.75)<.02||Math.abs(n-75)<.2)return '75%';if(Math.abs(n-1)<.02||Math.abs(n-100)<.2)return '100%';return n<=1.5?`${Math.round(n*100)}%`:`${Math.round(n)}%`}
+function rateFromSap(code,text){const c=String(code??'').trim();if(c==='1214')return '50%';if(c==='1215')return '75%';if(c==='1216')return '100%';const t=normalizeText(text);if(t.includes('50%'))return '50%';if(t.includes('75%'))return '75%';if(t.includes('100%'))return '100%';return ''}
+function findHeaderRow(rows,groups){let best={index:-1,score:0};for(let i=0;i<Math.min(rows.length,35);i++){const headers=(rows[i]||[]).map(normalizeHeader);let score=0;for(const g of groups)if(g.some(a=>headers.includes(normalizeHeader(a))))score++;if(score>best.score)best={index:i,score}}return best}
+function buildMap(row){const m={};(row||[]).forEach((v,i)=>{const k=normalizeHeader(v);if(k&&m[k]==null)m[k]=i});return m}
+function findColumn(map,aliases,required=true){for(const a of aliases){const k=normalizeHeader(a);if(map[k]!=null)return map[k]}if(required)throw new Error(`No se encontró la columna “${aliases[0]}”.`);return null}
+function sheetCandidates(workbook,type){const groups=type==='bd'?
+  [['Nombre','Nombre completo'],['Apellidos','Apellido','Nombre completo'],['Fecha inicio','Fecha'],['Horas trabajadas','Total HH'],['% hrs extras','Recargo'],['Estado']]:
+  [['Nombre del empleado o candidato','Nombre empleado'],['Fecha'],['Horas'],['Clase absent./pres.','Txt.cl.pres./ab.']];
+  const threshold=type==='bd'?5:3;return workbook.sheets.map(s=>({...s,header:findHeaderRow(s.rows,groups)})).filter(s=>s.header.index>=0&&s.header.score>=threshold)}
+function parseBd(workbook,filename){const candidates=sheetCandidates(workbook,'bd');if(!candidates.length)throw new Error('No se reconoció ninguna hoja válida de BD.HE.');const records=[],statusCounts={},statusByPeriod={},sheetStats=[],qualityCounts={},seen=new Set();let potentialDuplicates=0,invalidDates=0,zeroHours=0;
+  for(const sheet of candidates){const map=buildMap(sheet.rows[sheet.header.index]);const col={first:findColumn(map,['Nombre','Nombres'],false),last:findColumn(map,['Apellidos','Apellido'],false),full:findColumn(map,['Nombre completo','Trabajador'],false),rut:findColumn(map,['RUT'],false),date:findColumn(map,['Fecha inicio','Fecha']),hours:findColumn(map,['Horas trabajadas','Total HH','Total horas']),rate:findColumn(map,['% hrs extras','Hrs extras','Recargo','Porcentaje']),status:findColumn(map,['Estado','Estado aprobación']),month:findColumn(map,['Mes'],false),year:findColumn(map,['Año','Ano'],false),start:findColumn(map,['Hr inicio','Hora inicio'],false),end:findColumn(map,['Hr término','Hr termino','Hora término','Hora termino'],false),comments:findColumn(map,['Comentarios','Observación','Observacion'],false)};let valid=0;
+    for(let i=sheet.header.index+1;i<sheet.rows.length;i++){const row=sheet.rows[i]||[];const full=col.full!=null?row[col.full]:'';const name=String(full||`${col.first!=null?row[col.first]||'':''} ${col.last!=null?row[col.last]||'':''}`).replace(/\s+/g,' ').trim();if(!name)continue;const rawDate=row[col.date];const rawParts=rawDateParts(rawDate);const periodMonth=Number(col.month!=null?row[col.month]:rawParts?.m),periodYear=Number(col.year!=null?row[col.year]:rawParts?.y);if(!periodMonth||!periodYear)continue;const corrected=correctBdDate(rawDate,periodYear,periodMonth);qualityCounts[corrected.quality]=(qualityCounts[corrected.quality]||0)+1;if(!corrected.iso){invalidDates++;continue}const status=String(row[col.status]??'').trim(),normStatus=normalizeText(status),statusKey=normStatus||'SIN ESTADO',periodKey=`${periodYear}-${String(periodMonth).padStart(2,'0')}`;statusCounts[statusKey]=(statusCounts[statusKey]||0)+1;statusByPeriod[periodKey]??={};statusByPeriod[periodKey][statusKey]=(statusByPeriod[periodKey][statusKey]||0)+1;const h=parseHours(row[col.hours]);if(Math.abs(h)<1e-9){zeroHours++;continue}const rate=rateFromBd(row[col.rate]);const rut=col.rut!=null?String(row[col.rut]??'').trim():'';const start=col.start!=null?String(row[col.start]??'').trim():'';const end=col.end!=null?String(row[col.end]??'').trim():'';const comments=col.comments!=null?String(row[col.comments]??'').trim():'';const dedupe=[normalizeText(name),rut,corrected.iso,rate,h.toFixed(6),start,end,normStatus,normalizeText(comments)].join('|');if(seen.has(dedupe))potentialDuplicates++;else seen.add(dedupe);records.push({sourceSheet:sheet.name,sourceRow:i+1,name,normName:normalizeText(name),rut,date:corrected.iso,year:periodYear,month:periodMonth,hours:h,rate,status,normStatus,comments,dateQuality:corrected.quality});valid++}
+    sheetStats.push({name:sheet.name,headerRow:sheet.header.index+1,records:valid})}
+  return {filename,records,sheets:sheetStats,statusCounts,statusByPeriod,qualityCounts,potentialDuplicates,invalidDates,zeroHours};
+}
+function parseSap(workbook,filename){const candidates=sheetCandidates(workbook,'sap');if(!candidates.length)throw new Error('No se reconoció una hoja válida de SAP.');const records=[],sheetStats=[],normalByPeriod={};let normalIgnored=0,zeroHours=0,invalidDates=0;
+  for(const sheet of candidates){const map=buildMap(sheet.rows[sheet.header.index]);const col={personnel:findColumn(map,['Número de personal','Numero de personal'],false),name:findColumn(map,['Nombre del empleado o candidato','Nombre empleado']),date:findColumn(map,['Fecha']),hours:findColumn(map,['Horas']),code:findColumn(map,['Clase absent./pres.','Clase absent pres'],false),text:findColumn(map,['Txt.cl.pres./ab.','Txt cl pres ab'],false)};let valid=0;
+    for(let i=sheet.header.index+1;i<sheet.rows.length;i++){const row=sheet.rows[i]||[];const date=parseSapDate(row[col.date]);if(!date){if(row[col.name])invalidDates++;continue}const name=String(row[col.name]??'').replace(/\s+/g,' ').trim();if(!name)continue;const rate=rateFromSap(col.code!=null?row[col.code]:'',col.text!=null?row[col.text]:'');if(!rate){normalIgnored++;const pk=`${date.slice(0,4)}-${date.slice(5,7)}`;normalByPeriod[pk]=(normalByPeriod[pk]||0)+1;continue}const h=parseSapHours(row[col.hours]);if(Math.abs(h)<1e-9){zeroHours++;continue}records.push({sourceSheet:sheet.name,sourceRow:i+1,personnel:col.personnel!=null?String(row[col.personnel]??'').trim():'',name,normName:normalizeText(name),date,year:+date.slice(0,4),month:+date.slice(5,7),hours:h,rate,code:col.code!=null?String(row[col.code]??'').trim():'',text:col.text!=null?String(row[col.text]??'').trim():''});valid++}
+    sheetStats.push({name:sheet.name,headerRow:sheet.header.index+1,records:valid})}
+  return {filename,records,sheets:sheetStats,normalIgnored,normalByPeriod,zeroHours,invalidDates};
+}
 
-    function normalizeText(value) {
-      return String(value ?? '')
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/\u00a0/g, ' ')
-        .toUpperCase()
-        .replace(/[^A-Z0-9% ]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
+function refreshPeriods(){if(!state.bd||!state.sap)return;const maxYear=new Date().getFullYear()+2;const years=uniqueSorted([...state.bd.records.map(r=>r.year),...state.sap.records.map(r=>r.year)]).filter(y=>y>=2018&&y<=maxYear);$('yearSelect').innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');const latestYear=years.at(-1);$('yearSelect').value=String(latestYear||'');refreshMonths();const common=[];for(const y of years)for(let m=1;m<=12;m++){const b=state.bd.records.some(r=>r.year===y&&r.month===m),s=state.sap.records.some(r=>r.year===y&&r.month===m);if(b&&s)common.push([y,m])}if(common.length){const [y,m]=common.at(-1);$('yearSelect').value=String(y);refreshMonths();$('monthSelect').value=String(m)}}
+function refreshMonths(){if(!state.bd||!state.sap)return;const y=+$('yearSelect').value;const months=uniqueSorted([...state.bd.records.filter(r=>r.year===y).map(r=>r.month),...state.sap.records.filter(r=>r.year===y).map(r=>r.month)]);$('monthSelect').innerHTML=months.map(m=>`<option value="${m}">${MONTHS[m-1]}</option>`).join('');$('monthSelect').value=String(months.at(-1)||'')}
+function nameScore(bd,sap){const b=normalizeText(bd).split(' ').filter(Boolean),s=normalizeText(sap).split(' ').filter(Boolean);if(!b.length||!s.length)return 0;const bs=new Set(b),ss=new Set(s);const inter=b.filter(x=>ss.has(x)).length,union=new Set([...b,...s]).size;const exact=normalizeText(bd)===normalizeText(sap),subset=b.every(x=>ss.has(x)),firstLast=ss.has(b[0])&&ss.has(b.at(-1));return (exact?4:0)+(subset?2:0)+(firstLast?.5:0)+(union?inter/union:0)}
+function proposeMappings(bdRecords,sapRecords){const bdNames=uniqueSorted(bdRecords.map(r=>r.normName)),sapNames=uniqueSorted(sapRecords.map(r=>r.normName)),bdDisplay={},sapDisplay={};bdRecords.forEach(r=>bdDisplay[r.normName]??=r.name);sapRecords.forEach(r=>sapDisplay[r.normName]??=r.name);const mappings={},meta={};for(const bd of bdNames){const ranked=sapNames.map(s=>({sap:s,score:nameScore(bd,s)})).sort((a,b)=>b.score-a.score),best=ranked[0]||{sap:'',score:0},second=ranked[1]||{score:0};let selected='',level='low';if(best.score>=2.5&&best.score-second.score>.12){selected=best.sap;level=best.score>=3.1?'high':'medium'}else if(best.score>=1.15&&best.score-second.score>.25){selected=best.sap;level='medium'}if(state.mappings[bd]&&sapNames.includes(state.mappings[bd]))selected=state.mappings[bd];mappings[bd]=selected;meta[bd]={score:best.score,level,bdDisplay:bdDisplay[bd]||bd,sapDisplay:sapDisplay[selected]||selected}}
+  return {mappings,meta,sapNames,sapDisplay};
+}
+function renderMappings(data){state.mappings=data.mappings;state.mappingMeta=data.meta;const opts=data.sapNames.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(data.sapDisplay[n]||n)}</option>`).join('');$('mappingBody').innerHTML=Object.keys(data.mappings).map(bd=>{const x=data.meta[bd],label=x.level==='high'?'Alta':x.level==='medium'?'Media':'Revisar';return `<tr><td><strong>${escapeHtml(x.bdDisplay)}</strong></td><td><select class="mapping-select" data-bd="${escapeHtml(bd)}"><option value="">Sin asociación</option>${opts}</select></td><td><span class="confidence ${x.level}">${label}</span></td></tr>`}).join('');document.querySelectorAll('.mapping-select').forEach(s=>s.value=state.mappings[s.dataset.bd]||'');if(Object.values(data.meta).some(x=>x.level==='low'))$('mappingDetails').open=true}
+function selectedMappings(){document.querySelectorAll('.mapping-select').forEach(s=>state.mappings[s.dataset.bd]=s.value);return state.mappings}
+function keyOf(name,date,rate){return `${name}|||${date}|||${rate}`}
+function statusClass(s){return s==='Conforme'?'st-good':s==='Solo formulario'?'st-form':s==='Solo SAP'?'st-sap':s==='Sin asociación'?'st-unmatched':'st-review'}
+function compareData(year,month,tolerance,mappings){const approvedOnly=$('approvedOnly').checked,bdAll=state.bd.records.filter(r=>r.year===year&&r.month===month),bd=bdAll.filter(r=>!approvedOnly||isApprovedStatus(r.normStatus)),sap=state.sap.records.filter(r=>r.year===year&&r.month===month);const bdDisp={},sapDisp={};bd.forEach(r=>bdDisp[r.normName]??=r.name);sap.forEach(r=>sapDisp[r.normName]??=r.name);const ba=new Map(),sa=new Map();
+  for(const r of bd){const mapped=mappings[r.normName]||'',canonical=mapped||`BD::${r.normName}`,rate=r.rate||'SIN RECARGO',k=keyOf(canonical,r.date,rate),x=ba.get(k)||{hours:0,records:0,canonical,date:r.date,rate,bdNames:new Set(),sources:[]};x.hours+=r.hours;x.records++;x.bdNames.add(r.normName);x.sources.push({sheet:r.sourceSheet,row:r.sourceRow});ba.set(k,x)}
+  for(const r of sap){const canonical=r.normName,rate=r.rate||'SIN RECARGO',k=keyOf(canonical,r.date,rate),x=sa.get(k)||{hours:0,records:0,canonical,date:r.date,rate,sapNames:new Set(),sources:[]};x.hours+=r.hours;x.records++;x.sapNames.add(r.normName);x.sources.push({sheet:r.sourceSheet,row:r.sourceRow});sa.set(k,x)}
+  const detail=[...new Set([...ba.keys(),...sa.keys()])].sort().map(k=>{const b=ba.get(k),s=sa.get(k),src=b||s,bdHours=+(b?.hours||0).toFixed(6),sapHours=+(s?.hours||0).toFixed(6),diff=+(sapHours-bdHours).toFixed(6),unmatched=src.canonical.startsWith('BD::');let status;if(unmatched)status='Sin asociación';else if(Math.abs(diff)<=tolerance)status='Conforme';else if(bdHours===0)status='Solo SAP';else if(sapHours===0)status='Solo formulario';else status='Diferencia';const bdName=[...(b?.bdNames||[])].map(n=>bdDisp[n]||n).join(' / '),sapName=sapDisp[src.canonical]||[...(s?.sapNames||[])].map(n=>sapDisp[n]||n)[0]||'',worker=sapName||bdName||src.canonical.replace('BD::','');let observation;if(status==='Conforme')observation=Math.abs(diff)>0?'Coincide dentro de la tolerancia definida.':'Coincidencia exacta.';else if(status==='Solo formulario')observation=`Revisar: ${formatHours(bdHours)} h aprobadas en BD.HE no figuran en SAP.`;else if(status==='Solo SAP')observation=`Revisar: ${formatHours(sapHours)} h figuran en SAP sin respaldo aprobado en BD.HE.`;else if(status==='Sin asociación')observation='No fue posible asociar automáticamente este trabajador con un nombre de SAP.';else observation=`Revisar diferencia de ${signedHours(diff)} h entre SAP y BD.HE.`;return {key:k,canonical:src.canonical,date:src.date,rate:src.rate,worker,bdName,sapName,bdHours,sapHours,diff,status,observation,bdSources:b?.sources||[],sapSources:s?.sources||[]}});
+  const sm=new Map();for(const r of detail){const x=sm.get(r.canonical)||{canonical:r.canonical,worker:r.worker,bdNames:new Set(),sapNames:new Set(),bdHours:0,sapHours:0,issues:[],all:[]};if(r.bdName)r.bdName.split(' / ').forEach(n=>x.bdNames.add(n));if(r.sapName)x.sapNames.add(r.sapName);x.bdHours+=r.bdHours;x.sapHours+=r.sapHours;x.all.push(r);if(r.status!=='Conforme')x.issues.push(r);sm.set(r.canonical,x)}
+  const summary=[...sm.values()].map(x=>{x.bdHours=+x.bdHours.toFixed(6);x.sapHours=+x.sapHours.toFixed(6);x.diff=+(x.sapHours-x.bdHours).toFixed(6);x.bdName=[...x.bdNames].join(' / ');x.sapName=[...x.sapNames].join(' / ');x.status=x.issues.length?'Revisar':'Conforme';if(!x.issues.length)x.observation=Math.abs(x.diff)>tolerance?`Coincidencia por línea; diferencia acumulada de ${signedHours(x.diff)} h por redondeos dentro de tolerancia.`:'Las horas coinciden por fecha y recargo.';else{x.observation=`Revisar ${x.issues.slice(0,3).map(d=>`${formatDate(d.date)} ${d.rate}: BD.HE ${formatHours(d.bdHours)} h / SAP ${formatHours(d.sapHours)} h`).join('; ')}${x.issues.length>3?`; y ${x.issues.length-3} incidencia(s) adicional(es)`:''}.`}return x}).sort((a,b)=>a.status.localeCompare(b.status,'es')||a.worker.localeCompare(b.worker,'es'));
+  const rateSummary={};for(const rate of ['50%','75%','100%'])rateSummary[rate]={bd:bd.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0),sap:sap.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0)};const periodKey=`${year}-${String(month).padStart(2,'0')}`,formStates={...(state.bd.statusByPeriod?.[periodKey]||{})};return {year,month,tolerance,approvedOnly,bdAll,bd,sap,detail,summary,rateSummary,formStates,totalBd:bd.reduce((a,r)=>a+r.hours,0),totalSap:sap.reduce((a,r)=>a+r.hours,0)};
+}
+function runComparison(rebuild=true){clearMessage();if(!state.bd||!state.sap)return showMessage('Debes cargar ambos archivos.','error');const y=+$('yearSelect').value,m=+$('monthSelect').value,t=Math.max(0,Number($('tolerance').value||0));if(!y||!m)return showMessage('Selecciona un año y un mes válidos.','error');showLoading('Comparando BD.HE y SAP...',`${MONTHS[m-1]} de ${y}`);setTimeout(()=>{try{const bdCand=state.bd.records.filter(r=>r.year===y&&r.month===m&&(!$('approvedOnly').checked||isApprovedStatus(r.normStatus))),sapCand=state.sap.records.filter(r=>r.year===y&&r.month===m);if(!bdCand.length&&!sapCand.length)throw new Error('No se encontraron registros para el período seleccionado.');if(rebuild)renderMappings(proposeMappings(bdCand,sapCand));else selectedMappings();state.results=compareData(y,m,t,state.mappings);state.summaryPage=1;state.detailPage=1;renderAll();$('results').classList.add('show');showMessage(`Comparación completada para ${MONTHS[m-1]} de ${y}. Presiona un trabajador para revisar sus horas por fecha.`,'success');window.scrollTo({top:$('results').offsetTop-15,behavior:'smooth'})}catch(e){showMessage(e.message||String(e),'error')}finally{hideLoading()}},50)}
+function renderAll(){renderQuality();renderKpis();renderRates();renderStates();renderSummary();renderDetail();renderReport()}
+function renderQuality(){const b=state.bd,s=state.sap,r=state.results,corrected=r.bdAll.filter(x=>x.dateQuality==='swapped-day-month'||x.dateQuality==='period-corrected').length,usedSheets=b.sheets.map(x=>x.name).join(', '),periodKey=`${r.year}-${String(r.month).padStart(2,'0')}`,normalPeriod=s.normalByPeriod?.[periodKey]||0;$('qualityText').innerHTML=`BD.HE: <strong>${b.sheets.length} hoja(s)</strong> consolidadas (${escapeHtml(usedSheets)}) y ${corrected.toLocaleString('es-CL')} fecha(s) del período normalizadas con apoyo de MES/Año. SAP: ${normalPeriod.toLocaleString('es-CL')} registro(s) de horas normales del período excluidos; se comparan ${r.sap.length.toLocaleString('es-CL')} registros de 50%, 75% o 100%.`}
+function renderKpis(){const r=state.results,good=r.summary.filter(x=>x.status==='Conforme').length,review=r.summary.length-good;$('kpiWorkers').textContent=r.summary.length;$('kpiGood').textContent=good;$('kpiReview').textContent=review;$('kpiBd').textContent=formatHours(r.totalBd);$('kpiSap').textContent=formatHours(r.totalSap);$('kpiDiff').textContent=signedHours(r.totalSap-r.totalBd);$('kpiBdRows').textContent=`${r.bd.length.toLocaleString('es-CL')} registros considerados`;$('kpiSapRows').textContent=`${r.sap.length.toLocaleString('es-CL')} registros 50%, 75% o 100%`}
+function renderRates(){$('rateGrid').innerHTML=['50%','75%','100%'].map(rate=>{const x=state.results.rateSummary[rate],max=Math.max(x.bd,x.sap,1),pct=Math.min(100,Math.abs(x.sap-x.bd)/max*100);return `<div class="rate-card"><div class="rate-head"><span>Horas al ${rate}</span><span>${signedHours(x.sap-x.bd)} h</span></div><div class="rate-values"><div><span>BD.HE</span><strong>${formatHours(x.bd)}</strong></div><div><span>SAP</span><strong>${formatHours(x.sap)}</strong></div></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join('')}
+function renderStates(){const entries=Object.entries(state.results.formStates).sort((a,b)=>b[1]-a[1]);$('statusList').innerHTML=entries.length?entries.map(([k,v])=>`<div class="status-row"><span>${escapeHtml(k)}</span><strong>${v}</strong></div>`).join(''):'<div class="status-row"><span>Sin registros BD.HE</span><strong>0</strong></div>'}
+function filteredSummary(){const q=normalizeText($('summarySearch').value),st=$('summaryStatus').value;return state.results.summary.filter(x=>(st==='Todos'||x.status===st)&&(!q||normalizeText(`${x.worker} ${x.bdName} ${x.sapName} ${x.observation}`).includes(q)))}
+function renderSummary(){const rows=filteredSummary(),pages=Math.max(1,Math.ceil(rows.length/SUMMARY_PAGE));state.summaryPage=Math.min(Math.max(1,state.summaryPage),pages);const page=rows.slice((state.summaryPage-1)*SUMMARY_PAGE,state.summaryPage*SUMMARY_PAGE);$('summaryBody').innerHTML=page.length?page.map(x=>`<tr class="${x.status==='Revisar'?'row-review':''}"><td><button class="worker-link" data-worker="${escapeHtml(x.canonical)}">${escapeHtml(x.worker)}</button></td><td>${escapeHtml(x.bdName||'—')}</td><td>${escapeHtml(x.sapName||'—')}</td><td class="num">${formatHours(x.bdHours)}</td><td class="num">${formatHours(x.sapHours)}</td><td class="num">${signedHours(x.diff)}</td><td class="num">${x.issues.length}</td><td><span class="status-pill ${statusClass(x.status)}">${x.status}</span></td><td>${escapeHtml(x.observation)}</td><td><button class="btn btn-secondary detail-btn" style="height:31px" data-worker="${escapeHtml(x.canonical)}">Ver detalle</button></td></tr>`).join(''):`<tr><td colspan="10" class="empty">No hay resultados para los filtros seleccionados.</td></tr>`;$('summaryCount').textContent=`${rows.length} trabajador(es)`;$('summaryPageInfo').textContent=`Página ${state.summaryPage} de ${pages} · ${rows.length} resultado(s)`;$('summaryPrev').disabled=state.summaryPage<=1;$('summaryNext').disabled=state.summaryPage>=pages}
+function filteredDetail(){const q=normalizeText($('detailSearch').value),st=$('detailStatus').value;return state.results.detail.filter(x=>(st==='Todos'||x.status===st)&&(!q||normalizeText(`${x.worker} ${x.date} ${formatDate(x.date)} ${x.rate} ${x.observation}`).includes(q)))}
+function renderDetail(){const rows=filteredDetail(),pages=Math.max(1,Math.ceil(rows.length/DETAIL_PAGE));state.detailPage=Math.min(Math.max(1,state.detailPage),pages);const page=rows.slice((state.detailPage-1)*DETAIL_PAGE,state.detailPage*DETAIL_PAGE);$('detailBody').innerHTML=page.length?page.map(x=>`<tr class="${x.status==='Sin asociación'?'row-danger':x.status!=='Conforme'?'row-review':''}"><td>${formatDate(x.date)}</td><td><button class="worker-link" data-worker="${escapeHtml(x.canonical)}">${escapeHtml(x.worker)}</button></td><td>${escapeHtml(x.rate)}</td><td class="num">${formatHours(x.bdHours)}</td><td class="num">${formatHours(x.sapHours)}</td><td class="num">${signedHours(x.diff)}</td><td><span class="status-pill ${statusClass(x.status)}">${x.status}</span></td><td>${escapeHtml(x.observation)}</td></tr>`).join(''):`<tr><td colspan="8" class="empty">No hay resultados para los filtros seleccionados.</td></tr>`;$('detailCount').textContent=`${rows.length} combinación(es) trabajador-fecha-recargo`;$('detailPageInfo').textContent=`Página ${state.detailPage} de ${pages} · ${rows.length} resultado(s)`;$('detailPrev').disabled=state.detailPage<=1;$('detailNext').disabled=state.detailPage>=pages}
+function reportHtml(){const r=state.results,good=r.summary.filter(x=>x.status==='Conforme'),review=r.summary.filter(x=>x.status==='Revisar'),excluded=r.approvedOnly?Object.entries(r.formStates).filter(([k])=>!isApprovedStatus(k)).reduce((a,[,v])=>a+v,0):0;return `<h4>Informe de conciliación de horas extras — ${MONTHS[r.month-1]} de ${r.year}</h4><div class="report-meta">Generado el ${new Date().toLocaleString('es-CL')} · Tolerancia por combinación: ${formatHours(r.tolerance)} h · ${r.approvedOnly?'Solo registros aprobados de BD.HE':'Todos los estados de BD.HE'}</div><p>Se analizaron <strong>${r.summary.length} trabajadores</strong>. BD.HE contiene <strong>${formatHours(r.totalBd)} h</strong> consideradas y SAP contiene <strong>${formatHours(r.totalSap)} h extras</strong>, con una diferencia neta SAP − BD.HE de <strong>${signedHours(r.totalSap-r.totalBd)} h</strong>.${excluded?` Se excluyeron ${excluded} registro(s) BD.HE por no estar aprobados.`:''}</p><p><strong>${good.length} trabajador(es)</strong> presentan concordancia completa y <strong>${review.length} trabajador(es)</strong> requieren revisión.</p><h5>Trabajadores conformes</h5>${good.length?`<ul>${good.map(x=>`<li><strong>${escapeHtml(x.worker)}</strong>: BD.HE ${formatHours(x.bdHours)} h / SAP ${formatHours(x.sapHours)} h.</li>`).join('')}</ul>`:'<p>No se identificaron trabajadores completamente conformes.</p>'}<h5>Trabajadores que requieren revisión</h5>${review.length?`<ul>${review.map(x=>`<li><strong>${escapeHtml(x.worker)}</strong>: ${escapeHtml(x.observation)} Total BD.HE ${formatHours(x.bdHours)} h; SAP ${formatHours(x.sapHours)} h.</li>`).join('')}</ul>`:'<p>No se identificaron diferencias.</p>'}<h5>Conclusión</h5><p>${review.length?'Las personas señaladas presentan al menos una diferencia de fecha, recargo o cantidad de horas. El PDF detalla cada incidencia para su validación.':'Todas las horas aprobadas comparadas coinciden con SAP dentro de la tolerancia configurada.'}</p>`}
+function renderReport(){$('reportPreview').innerHTML=reportHtml()}
+function openWorker(canonical){const x=state.results.summary.find(s=>s.canonical===canonical);if(!x)return;state.activeWorker=x;$('modalWorker').textContent=x.worker;$('modalNames').textContent=`BD.HE: ${x.bdName||'Sin registro'} · SAP: ${x.sapName||'Sin registro'}`;$('modalBd').textContent=formatHours(x.bdHours);$('modalSap').textContent=formatHours(x.sapHours);$('modalDiff').textContent=signedHours(x.diff);$('modalStatus').textContent=x.status;$('modalStatus').style.color=x.status==='Conforme'?'var(--green)':'var(--red)';$('modalBody').innerHTML=x.all.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.rate.localeCompare(b.rate)).map(d=>`<tr class="${d.status!=='Conforme'?'row-review':''}"><td>${formatDate(d.date)}</td><td>${d.rate}</td><td class="num">${formatHours(d.bdHours)} h</td><td class="num">${formatHours(d.sapHours)} h</td><td class="num">${signedHours(d.diff)} h</td><td><span class="status-pill ${statusClass(d.status)}">${d.status}</span></td><td>${escapeHtml(d.observation)}</td></tr>`).join('');$('workerModal').classList.add('show');document.body.style.overflow='hidden'}
+function closeWorker(){$('workerModal').classList.remove('show');document.body.style.overflow=''}
 
-    function normalizeHeader(value) {
-      return normalizeText(value).replace(/%/g, '').replace(/\s+/g, ' ').trim();
-    }
+function csvEscape(v){const s=String(v??'');return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
+function downloadCsv(){const r=state.results,rows=[['Fecha','Trabajador','Recargo','Horas BD.HE','Horas SAP','Diferencia SAP - BD.HE','Estado','Observación'],...r.detail.map(x=>[formatDate(x.date),x.worker,x.rate,x.bdHours.toFixed(2),x.sapHours.toFixed(2),x.diff.toFixed(2),x.status,x.observation])];const csv='\uFEFF'+rows.map(row=>row.map(csvEscape).join(';')).join('\r\n');downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`Conciliacion_HE_${r.year}_${String(r.month).padStart(2,'0')}.csv`)}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 
-    function formatHours(value) {
-      const n = Number(value || 0);
-      return n.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function signedHours(value) {
-      const n = Number(value || 0);
-      const prefix = n > 0 ? '+' : '';
-      return prefix + formatHours(n);
-    }
-    function escapeHtml(value) {
-      return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    }
-    function statusClass(status) { return `status-${status.replace(/\s+/g,'-')}`; }
+/* Generador PDF ejecutivo, sin librerías externas. */
+const PDF_W=595.28,PDF_H=841.89;
+function pdfSanitize(s){return String(s??'').replace(/[–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,'...').replace(/\u00a0/g,' ').replace(/•/g,'*').replace(/[^\x00-\xFF]/g,'?')}
+function pdfEscape(s){return pdfSanitize(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[\r\n]+/g,' ')}
+function textWidth(s,size){let w=0;for(const ch of pdfSanitize(s)){if('MW@#%'.includes(ch))w+=.82;else if('ilI1.,:;!|'.includes(ch))w+=.28;else if(ch===' ')w+=.28;else w+=.52}return w*size}
+function wrapText(text,maxWidth,size){const words=pdfSanitize(text).split(/\s+/).filter(Boolean),lines=[];let line='';for(const w of words){const test=line?line+' '+w:w;if(textWidth(test,size)<=maxWidth||!line)line=test;else{lines.push(line);line=w}}if(line)lines.push(line);return lines.length?lines:['']}
+class PdfCanvas{
+  constructor(){this.pages=[];this.page=null;this.addPage()}
+  addPage(){this.page={ops:[]};this.pages.push(this.page);return this.page}
+  op(s){this.page.ops.push(s)}
+  color(c){return c.map(v=>(v/255).toFixed(3)).join(' ')}
+  rect(x,y,w,h,fill=null,stroke=null,lineWidth=.5){const py=PDF_H-y-h;this.op('q');if(fill)this.op(`${this.color(fill)} rg`);if(stroke)this.op(`${this.color(stroke)} RG ${lineWidth} w`);this.op(`${x.toFixed(2)} ${py.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re ${fill&&stroke?'B':fill?'f':'S'}`);this.op('Q')}
+  line(x1,y1,x2,y2,color=[0,47,108],width=1){this.op(`q ${this.color(color)} RG ${width} w ${x1.toFixed(2)} ${(PDF_H-y1).toFixed(2)} m ${x2.toFixed(2)} ${(PDF_H-y2).toFixed(2)} l S Q`)}
+  text(text,x,y,size=10,bold=false,color=[30,45,57],align='left'){let tx=x;if(align==='right')tx=x-textWidth(text,size);if(align==='center')tx=x-textWidth(text,size)/2;this.op(`BT /${bold?'F2':'F1'} ${size.toFixed(2)} Tf ${this.color(color)} rg 1 0 0 1 ${tx.toFixed(2)} ${(PDF_H-y).toFixed(2)} Tm (${pdfEscape(text)}) Tj ET`)}
+  wrapped(text,x,y,maxWidth,size=9,lineHeight=12,bold=false,color=[30,45,57]){const lines=wrapText(text,maxWidth,size);lines.forEach((ln,i)=>this.text(ln,x,y+i*lineHeight,size,bold,color));return y+lines.length*lineHeight}
+}
+function pageHeader(pdf,title,subtitle,pageNum){pdf.text('transelec',40,43,23,true,[0,119,190]);pdf.text('Conectamos las energías del futuro',40,56,6.5,false,[0,47,108]);pdf.text(title,555,43,15,true,[0,47,108],'right');if(subtitle)pdf.text(subtitle,555,57,8,false,[90,110,125],'right');pdf.line(40,68,555,68,[0,119,190],2);pdf.text(`Página ${pageNum}`,555,820,7,false,[105,120,132],'right');pdf.text('Documento generado automáticamente por el comparador BD.HE / SAP.',40,820,7,false,[105,120,132])}
+function ensureSpace(ctx,needed,title,subtitle){if(ctx.y+needed>795){ctx.pdf.addPage();ctx.page++;pageHeader(ctx.pdf,title,subtitle,ctx.page);ctx.y=88;return true}return false}
+function drawSection(ctx,title){ensureSpace(ctx,28,ctx.title,ctx.subtitle);ctx.pdf.text(title,40,ctx.y,11,true,[0,47,108]);ctx.pdf.line(40,ctx.y+6,555,ctx.y+6,[203,218,228],.6);ctx.y+=20}
+function drawKpis(ctx,items){const gap=9,w=(515-gap*2)/3,h=55;for(let i=0;i<items.length;i++){if(i%3===0&&i>0)ctx.y+=h+gap;const col=i%3,x=40+col*(w+gap);ctx.pdf.rect(x,ctx.y,w,h,[246,249,251],[215,226,234],.5);ctx.pdf.text(items[i][0],x+10,ctx.y+15,7,true,[96,117,132]);ctx.pdf.text(items[i][1],x+10,ctx.y+39,17,true,items[i][2]||[0,47,108])}ctx.y+=h+10}
+function drawTable(ctx,columns,rows,opts={}){const headH=22,size=opts.size||7.5,lineH=opts.lineH||9,pad=5;const drawHead=()=>{ensureSpace(ctx,headH+5,ctx.title,ctx.subtitle);ctx.pdf.rect(40,ctx.y,515,headH,[239,244,247],[205,218,227],.5);let x=40;columns.forEach(c=>{ctx.pdf.text(c.label,c.align==='right'?x+c.w-pad:x+pad,ctx.y+14,7,true,[65,85,101],c.align||'left');x+=c.w});ctx.y+=headH};drawHead();for(const row of rows){const wrapped=columns.map(c=>wrapText(String(row[c.key]??''),c.w-pad*2,size));const rh=Math.max(20,...wrapped.map(a=>a.length*lineH+8));if(ctx.y+rh>795){ctx.pdf.addPage();ctx.page++;pageHeader(ctx.pdf,ctx.title,ctx.subtitle,ctx.page);ctx.y=88;drawHead()}const fill=opts.rowFill?opts.rowFill(row):null;if(fill)ctx.pdf.rect(40,ctx.y,515,rh,fill,null);ctx.pdf.line(40,ctx.y+rh,555,ctx.y+rh,[226,233,238],.4);let x=40;columns.forEach((c,j)=>{const lines=wrapped[j];lines.forEach((ln,k)=>ctx.pdf.text(ln,c.align==='right'?x+c.w-pad:x+pad,ctx.y+12+k*lineH,size,c.bold?.(row)||false,c.color?.(row)||[30,45,57],c.align||'left'));x+=c.w});ctx.y+=rh}ctx.y+=8}
+function buildExecutivePdf(worker=null){const r=state.results,pdf=new PdfCanvas(),period=`${MONTHS[r.month-1]} de ${r.year}`,title=worker?'Detalle de horas extras':'Informe de conciliación de horas extras',subtitle=worker?worker.worker:period,ctx={pdf,y:88,page:1,title,subtitle};pageHeader(pdf,title,subtitle,1);
+  if(worker){pdf.rect(40,ctx.y,515,66,[247,250,252],[203,218,228],.6);pdf.text('Trabajador',50,ctx.y+17,7,true,[91,111,126]);pdf.text(worker.worker,50,ctx.y+34,12,true,[0,47,108]);pdf.text(`Período: ${period}`,50,ctx.y+51,8,false,[55,74,88]);pdf.text(`Estado: ${worker.status}`,545,ctx.y+24,10,true,worker.status==='Conforme'?[22,135,93]:[199,61,74],'right');pdf.text(`BD.HE ${formatHours(worker.bdHours)} h · SAP ${formatHours(worker.sapHours)} h · Diferencia ${signedHours(worker.diff)} h`,545,ctx.y+45,8,false,[55,74,88],'right');ctx.y+=82;drawSection(ctx,'Detalle por fecha y recargo');const rows=worker.all.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.rate.localeCompare(b.rate)).map(x=>({date:formatDate(x.date),rate:x.rate,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),status:x.status,obs:x.observation}));drawTable(ctx,[{label:'Fecha',key:'date',w:68},{label:'Recargo',key:'rate',w:48},{label:'BD.HE',key:'bd',w:55,align:'right'},{label:'SAP',key:'sap',w:55,align:'right'},{label:'Dif.',key:'diff',w:55,align:'right'},{label:'Estado',key:'status',w:74},{label:'Observación',key:'obs',w:160}],rows,{size:7,rowFill:x=>x.status==='Conforme'?null:[255,249,238]});return pdfToBlob(pdf)}
+  pdf.rect(40,ctx.y,515,72,[247,250,252],[203,218,228],.6);pdf.text('Período analizado',50,ctx.y+17,7,true,[91,111,126]);pdf.text(period,50,ctx.y+36,13,true,[0,47,108]);pdf.text(`BD.HE: ${state.bd.filename}`,50,ctx.y+54,7,false,[75,92,105]);pdf.text(`SAP: ${state.sap.filename}`,545,ctx.y+54,7,false,[75,92,105],'right');ctx.y+=88;const good=r.summary.filter(x=>x.status==='Conforme').length,review=r.summary.length-good;drawKpis(ctx,[['Trabajadores',String(r.summary.length)],[ 'Conformes',String(good),[22,135,93]],['A revisar',String(review),[199,61,74]],['Horas BD.HE',formatHours(r.totalBd)],['Horas SAP',formatHours(r.totalSap)],['Diferencia SAP - BD.HE',signedHours(r.totalSap-r.totalBd),[200,135,0]]]);
+  drawSection(ctx,'Resumen ejecutivo');ctx.y=pdf.wrapped(`Se compararon las horas aprobadas del formulario BD.HE con las horas extras de SAP por trabajador, fecha y recargo. SAP excluye las horas normales y considera únicamente 50%, 75% y 100%. ${good} trabajador(es) presentan concordancia completa y ${review} requieren revisión.`,40,ctx.y,515,8.5,12,false,[40,58,72])+8;
+  drawSection(ctx,'Resumen por trabajador');const summaryRows=r.summary.map(x=>({worker:x.worker,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),inc:String(x.issues.length),status:x.status}));drawTable(ctx,[{label:'Trabajador',key:'worker',w:220},{label:'BD.HE',key:'bd',w:60,align:'right'},{label:'SAP',key:'sap',w:60,align:'right'},{label:'Dif.',key:'diff',w:60,align:'right'},{label:'Inc.',key:'inc',w:42,align:'right'},{label:'Estado',key:'status',w:73}],summaryRows,{size:7.4,rowFill:x=>x.status==='Conforme'?null:[255,249,238],color:x=>x.status==='Conforme'?[30,45,57]:[135,77,0]});
+  const issues=r.detail.filter(x=>x.status!=='Conforme');drawSection(ctx,'Detalle de incidencias');if(!issues.length){ctx.y=pdf.wrapped('No se identificaron diferencias para el período seleccionado.',40,ctx.y,515,9,12,false,[22,105,71])}else{const issueRows=issues.map(x=>({date:formatDate(x.date),worker:x.worker,rate:x.rate,bd:formatHours(x.bdHours),sap:formatHours(x.sapHours),diff:signedHours(x.diff),status:x.status}));drawTable(ctx,[{label:'Fecha',key:'date',w:61},{label:'Trabajador',key:'worker',w:180},{label:'%',key:'rate',w:38},{label:'BD',key:'bd',w:48,align:'right'},{label:'SAP',key:'sap',w:48,align:'right'},{label:'Dif.',key:'diff',w:50,align:'right'},{label:'Estado',key:'status',w:90}],issueRows,{size:7,rowFill:()=>[255,249,238]})}
+  return pdfToBlob(pdf);
+}
+function pdfToBlob(pdf){const objects=[];const add=s=>(objects.push(s),objects.length);const catalog=add(''),pagesObj=add(''),font1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),font2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');const pageNums=[];for(const p of pdf.pages){const stream=p.ops.join('\n');const content=add(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);const page=add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${PDF_W} ${PDF_H}] /Resources << /Font << /F1 ${font1} 0 R /F2 ${font2} 0 R >> >> /Contents ${content} 0 R >>`);pageNums.push(page)}objects[catalog-1]=`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;objects[pagesObj-1]=`<< /Type /Pages /Kids [${pageNums.map(n=>`${n} 0 R`).join(' ')}] /Count ${pageNums.length} >>`;let out='%PDF-1.4\n%âãÏÓ\n',offsets=[0];for(let i=0;i<objects.length;i++){offsets.push(out.length);out+=`${i+1} 0 obj\n${objects[i]}\nendobj\n`}const xref=out.length;out+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;for(let i=1;i<offsets.length;i++)out+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';out+=`trailer\n<< /Size ${objects.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;const bytes=new Uint8Array(out.length);for(let i=0;i<out.length;i++)bytes[i]=out.charCodeAt(i)&255;return new Blob([bytes],{type:'application/pdf'})}
 
-    function parseExcelDate(value) {
-      if (value == null || value === '') return null;
-      if (value instanceof Date && !isNaN(value)) {
-        return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
-      }
-      if (typeof value === 'number' && typeof XLSX !== 'undefined') {
-        const d = XLSX.SSF.parse_date_code(value);
-        if (d && d.y && d.m && d.d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
-      }
-      const s = String(value).trim();
-      let m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
-      if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-      m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-      if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-      const d = new Date(s);
-      if (!isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      return null;
-    }
-
-    function parseHours(value) {
-      if (value == null || value === '') return 0;
-      if (value instanceof Date && !isNaN(value)) return value.getHours() + value.getMinutes()/60 + value.getSeconds()/3600;
-      if (typeof value === 'number') return value >= 0 && value < 1 ? value * 24 : value;
-      const s = String(value).trim().replace(',', '.');
-      const m = s.match(/^(\d{1,3}):(\d{1,2})(?::(\d{1,2}))?$/);
-      if (m) return Number(m[1]) + Number(m[2])/60 + Number(m[3] || 0)/3600;
-      const n = Number(s.replace(/[^0-9.\-]/g,''));
-      if (Number.isFinite(n)) return n >= 0 && n < 1 ? n * 24 : n;
-      return 0;
-    }
-
-    function rateFromBd(value) {
-      if (value == null || value === '') return '';
-      const s = String(value).trim().replace(',', '.');
-      if (s.includes('%')) {
-        const n = Number(s.replace(/[^0-9.]/g,''));
-        if (Number.isFinite(n)) return `${Math.round(n)}%`;
-      }
-      const n = Number(s);
-      if (!Number.isFinite(n)) return '';
-      if (Math.abs(n - .5) < .02 || Math.abs(n - 50) < .2) return '50%';
-      if (Math.abs(n - .75) < .02 || Math.abs(n - 75) < .2) return '75%';
-      if (Math.abs(n - 1) < .02 || Math.abs(n - 100) < .2) return '100%';
-      return n <= 1.5 ? `${Math.round(n*100)}%` : `${Math.round(n)}%`;
-    }
-
-    function rateFromSap(code, text) {
-      const c = String(code ?? '').trim();
-      if (c === '1214') return '50%';
-      if (c === '1215') return '75%';
-      if (c === '1216') return '100%';
-      const t = normalizeText(text);
-      if (t.includes('50%')) return '50%';
-      if (t.includes('75%')) return '75%';
-      if (t.includes('100%')) return '100%';
-      return '';
-    }
-
-    function findHeaderRow(rows, groups) {
-      let best = { index: -1, score: 0 };
-      const limit = Math.min(rows.length, 30);
-      for (let i=0; i<limit; i++) {
-        const headers = (rows[i] || []).map(normalizeHeader);
-        let score = 0;
-        groups.forEach(group => {
-          if (group.some(alias => headers.includes(normalizeHeader(alias)))) score++;
-        });
-        if (score > best.score) best = { index:i, score };
-      }
-      return best;
-    }
-
-    function buildColumnMap(headerRow) {
-      const map = {};
-      headerRow.forEach((value, idx) => {
-        const key = normalizeHeader(value);
-        if (key && map[key] == null) map[key] = idx;
-      });
-      return map;
-    }
-
-    function findColumn(map, aliases, required = true) {
-      for (const alias of aliases) {
-        const key = normalizeHeader(alias);
-        if (map[key] != null) return map[key];
-      }
-      if (required) throw new Error(`No se encontró la columna: ${aliases[0]}`);
-      return null;
-    }
-
-    function selectWorksheet(workbook, type) {
-      let best = null;
-      workbook.SheetNames.forEach(name => {
-        const sheet = workbook.Sheets[name];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header:1, raw:true, defval:null, blankrows:false });
-        const groups = type === 'bd'
-          ? [['RUT'],['Fecha inicio'],['Horas trabajadas'],['% hrs extras','hrs extras'],['Estado']]
-          : [['Nombre del empleado o candidato'],['Fecha'],['Horas'],['Clase absent./pres.','Txt.cl.pres./ab.']];
-        const header = findHeaderRow(rows, groups);
-        if (!best || header.score > best.score) best = { name, rows, headerIndex:header.index, score:header.score };
-      });
-      const minScore = type === 'bd' ? 4 : 3;
-      if (!best || best.headerIndex < 0 || best.score < minScore) throw new Error(`No fue posible reconocer la estructura del archivo ${type === 'bd' ? 'BD.HE' : 'SAP'}.`);
-      return best;
-    }
-
-    async function readWorkbook(file) {
-      if (typeof XLSX === 'undefined') throw new Error('No se pudo cargar la librería para leer Excel. Verifica tu conexión a internet y vuelve a abrir la página.');
-      const data = await file.arrayBuffer();
-      return XLSX.read(data, { type:'array', cellDates:false, cellNF:false, cellText:false });
-    }
-
-    function parseBd(workbook, filename) {
-      const selected = selectWorksheet(workbook, 'bd');
-      const headers = selected.rows[selected.headerIndex];
-      const map = buildColumnMap(headers);
-      const col = {
-        first: findColumn(map, ['Nombre'], false),
-        last: findColumn(map, ['Apellidos','Apellido'], false),
-        full: findColumn(map, ['Nombre completo'], false),
-        rut: findColumn(map, ['RUT'], false),
-        date: findColumn(map, ['Fecha inicio']),
-        hours: findColumn(map, ['Horas trabajadas']),
-        rate: findColumn(map, ['% hrs extras','hrs extras']),
-        status: findColumn(map, ['Estado']),
-        comments: findColumn(map, ['Comentarios'], false)
-      };
-      const records = [];
-      const statusCounts = {};
-      for (let i=selected.headerIndex+1; i<selected.rows.length; i++) {
-        const row = selected.rows[i] || [];
-        const date = parseExcelDate(row[col.date]);
-        if (!date) continue;
-        const fullCandidate = col.full != null ? row[col.full] : '';
-        const name = String(fullCandidate || `${col.first != null ? row[col.first] || '' : ''} ${col.last != null ? row[col.last] || '' : ''}`).trim();
-        if (!name) continue;
-        const status = String(row[col.status] ?? '').trim();
-        const normalizedStatus = normalizeText(status);
-        statusCounts[normalizedStatus || 'SIN ESTADO'] = (statusCounts[normalizedStatus || 'SIN ESTADO'] || 0) + 1;
-        records.push({
-          sourceRow: i+1,
-          name,
-          normName: normalizeText(name),
-          rut: col.rut != null ? String(row[col.rut] ?? '').trim() : '',
-          date,
-          year: Number(date.slice(0,4)),
-          month: Number(date.slice(5,7)),
-          hours: parseHours(row[col.hours]),
-          rate: rateFromBd(row[col.rate]),
-          status,
-          normStatus: normalizedStatus,
-          comments: col.comments != null ? String(row[col.comments] ?? '').trim() : ''
-        });
-      }
-      return { filename, sheet:selected.name, records, statusCounts, headerRow:selected.headerIndex+1 };
-    }
-
-    function parseSap(workbook, filename) {
-      const selected = selectWorksheet(workbook, 'sap');
-      const headers = selected.rows[selected.headerIndex];
-      const map = buildColumnMap(headers);
-      const col = {
-        personnel: findColumn(map, ['Número de personal','Numero de personal'], false),
-        name: findColumn(map, ['Nombre del empleado o candidato','Nombre empleado']),
-        date: findColumn(map, ['Fecha']),
-        hours: findColumn(map, ['Horas']),
-        code: findColumn(map, ['Clase absent./pres.','Clase absent pres'], false),
-        text: findColumn(map, ['Txt.cl.pres./ab.','Txt cl pres ab'], false)
-      };
-      const records = [];
-      for (let i=selected.headerIndex+1; i<selected.rows.length; i++) {
-        const row = selected.rows[i] || [];
-        const date = parseExcelDate(row[col.date]);
-        if (!date) continue;
-        const name = String(row[col.name] ?? '').trim();
-        if (!name) continue;
-        const rate = rateFromSap(col.code != null ? row[col.code] : '', col.text != null ? row[col.text] : '');
-        if (!rate) continue;
-        records.push({
-          sourceRow: i+1,
-          personnel: col.personnel != null ? String(row[col.personnel] ?? '').trim() : '',
-          name,
-          normName: normalizeText(name),
-          date,
-          year: Number(date.slice(0,4)),
-          month: Number(date.slice(5,7)),
-          hours: Number(row[col.hours] || 0),
-          rate,
-          code: col.code != null ? String(row[col.code] ?? '').trim() : '',
-          text: col.text != null ? String(row[col.text] ?? '').trim() : ''
-        });
-      }
-      return { filename, sheet:selected.name, records, headerRow:selected.headerIndex+1 };
-    }
-
-    function uniqueSorted(values) { return [...new Set(values.filter(v => v !== null && v !== undefined && v !== ''))].sort((a,b) => (typeof a === 'number' && typeof b === 'number') ? a-b : String(a).localeCompare(String(b),'es')); }
-
-    function refreshPeriodOptions() {
-      if (!state.bd || !state.sap) return;
-      const years = uniqueSorted([...state.bd.records.map(r=>r.year), ...state.sap.records.map(r=>r.year)]).sort((a,b)=>a-b);
-      $('yearSelect').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-      const has2025 = years.includes(2025);
-      $('yearSelect').value = has2025 ? '2025' : String(years.at(-1) || '');
-      const year = Number($('yearSelect').value);
-      const months = uniqueSorted([
-        ...state.bd.records.filter(r=>r.year===year).map(r=>r.month),
-        ...state.sap.records.filter(r=>r.year===year).map(r=>r.month)
-      ]).sort((a,b)=>a-b);
-      $('monthSelect').value = months.includes(12) ? '12' : String(months.at(-1) || '');
-    }
-
-    function isApprovedStatus(value) { return normalizeText(value).startsWith('APROBAD'); }
-
-    function nameScore(bdName, sapName) {
-      const b = normalizeText(bdName).split(' ').filter(Boolean);
-      const s = normalizeText(sapName).split(' ').filter(Boolean);
-      if (!b.length || !s.length) return 0;
-      const bSet = new Set(b), sSet = new Set(s);
-      const intersection = b.filter(t => sSet.has(t)).length;
-      const union = new Set([...b,...s]).size;
-      const jaccard = union ? intersection / union : 0;
-      const subset = b.every(t => sSet.has(t));
-      const firstLast = sSet.has(b[0]) && sSet.has(b[b.length-1]);
-      const exact = normalizeText(bdName) === normalizeText(sapName);
-      return (exact ? 4 : 0) + (subset ? 2 : 0) + (firstLast ? .5 : 0) + jaccard;
-    }
-
-    function proposeMappings(bdRecords, sapRecords) {
-      const bdNames = uniqueSorted(bdRecords.map(r=>r.normName));
-      const sapNames = uniqueSorted(sapRecords.map(r=>r.normName));
-      const sapDisplay = {};
-      sapRecords.forEach(r => { if (!sapDisplay[r.normName]) sapDisplay[r.normName] = r.name; });
-      const bdDisplay = {};
-      bdRecords.forEach(r => { if (!bdDisplay[r.normName]) bdDisplay[r.normName] = r.name; });
-      const mappings = {};
-      const meta = {};
-      bdNames.forEach(bd => {
-        const ranked = sapNames.map(sap => ({ sap, score:nameScore(bd,sap) })).sort((a,b)=>b.score-a.score);
-        const best = ranked[0] || {sap:'',score:0};
-        const second = ranked[1] || {score:0};
-        let selected = '';
-        let level = 'low';
-        if (best.score >= 2.5 && best.score - second.score > .12) {
-          selected = best.sap;
-          level = best.score >= 3.1 ? 'high' : 'medium';
-        } else if (best.score >= 1.15 && best.score - second.score > .25) {
-          selected = best.sap;
-          level = 'medium';
-        }
-        if (state.mappings[bd] && sapNames.includes(state.mappings[bd])) selected = state.mappings[bd];
-        mappings[bd] = selected;
-        meta[bd] = { score:best.score, level, bdDisplay:bdDisplay[bd] || bd, sapDisplay:sapDisplay[selected] || selected, candidates:ranked.slice(0,5) };
-      });
-      return { mappings, meta, sapNames, sapDisplay, bdDisplay };
-    }
-
-    function renderMappings(mappingData) {
-      state.mappings = mappingData.mappings;
-      state.mappingMeta = mappingData.meta;
-      const options = mappingData.sapNames.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(mappingData.sapDisplay[n] || n)}</option>`).join('');
-      $('mappingBody').innerHTML = Object.keys(mappingData.mappings).map(bd => {
-        const selected = mappingData.mappings[bd];
-        const info = mappingData.meta[bd];
-        const levelLabel = info.level === 'high' ? 'Alta' : info.level === 'medium' ? 'Media' : 'Revisar';
-        return `<tr>
-          <td><strong>${escapeHtml(info.bdDisplay)}</strong></td>
-          <td><select class="mapping-select" data-bd="${escapeHtml(bd)}"><option value="">Sin asociación</option>${options}</select></td>
-          <td><span class="confidence ${info.level}">${levelLabel}</span></td>
-        </tr>`;
-      }).join('');
-      document.querySelectorAll('.mapping-select').forEach(select => { select.value = state.mappings[select.dataset.bd] || ''; });
-      const lowCount = Object.values(mappingData.meta).filter(x=>x.level==='low').length;
-      if (lowCount) $('mappingDetails').open = true;
-    }
-
-    function getSelectedMappings() {
-      document.querySelectorAll('.mapping-select').forEach(select => { state.mappings[select.dataset.bd] = select.value; });
-      return state.mappings;
-    }
-
-    function makeKey(name, date, rate) { return `${name}|||${date}|||${rate}`; }
-
-    function compareData(year, month, tolerance, mappings) {
-      const approvedOnly = $('approvedOnly').checked;
-      const bdPeriodAll = state.bd.records.filter(r => r.year===year && r.month===month);
-      const bdPeriod = bdPeriodAll.filter(r => !approvedOnly || isApprovedStatus(r.normStatus));
-      const sapPeriod = state.sap.records.filter(r => r.year===year && r.month===month);
-
-      const bdDisplay = {}, sapDisplay = {};
-      bdPeriod.forEach(r => { if (!bdDisplay[r.normName]) bdDisplay[r.normName]=r.name; });
-      sapPeriod.forEach(r => { if (!sapDisplay[r.normName]) sapDisplay[r.normName]=r.name; });
-
-      const bdAgg = new Map(), sapAgg = new Map();
-      bdPeriod.forEach(r => {
-        const mapped = mappings[r.normName] || '';
-        const canonical = mapped || `BD::${r.normName}`;
-        const key = makeKey(canonical,r.date,r.rate || 'SIN RECARGO');
-        const current = bdAgg.get(key) || { hours:0, records:0, canonical, date:r.date, rate:r.rate || 'SIN RECARGO', bdNames:new Set(), sapNames:new Set() };
-        current.hours += Number(r.hours || 0); current.records++; current.bdNames.add(r.normName);
-        bdAgg.set(key,current);
-      });
-      sapPeriod.forEach(r => {
-        const canonical = r.normName;
-        const key = makeKey(canonical,r.date,r.rate || 'SIN RECARGO');
-        const current = sapAgg.get(key) || { hours:0, records:0, canonical, date:r.date, rate:r.rate || 'SIN RECARGO', bdNames:new Set(), sapNames:new Set() };
-        current.hours += Number(r.hours || 0); current.records++; current.sapNames.add(r.normName);
-        sapAgg.set(key,current);
-      });
-
-      const keys = [...new Set([...bdAgg.keys(),...sapAgg.keys()])].sort();
-      const detail = keys.map(key => {
-        const b = bdAgg.get(key), s = sapAgg.get(key);
-        const source = b || s;
-        const bdHours = Number((b?.hours || 0).toFixed(4));
-        const sapHours = Number((s?.hours || 0).toFixed(4));
-        const diff = Number((sapHours-bdHours).toFixed(4));
-        const unmatched = source.canonical.startsWith('BD::');
-        let status;
-        if (unmatched) status='Sin asociación';
-        else if (Math.abs(diff) <= tolerance) status='Conforme';
-        else if (bdHours===0) status='Solo SAP';
-        else if (sapHours===0) status='Solo formulario';
-        else status='Diferencia';
-        const canonical = source.canonical;
-        const bdNormNames = [...(b?.bdNames || [])];
-        const sapNormNames = [...(s?.sapNames || [])];
-        const bdNames = bdNormNames.map(n=>bdDisplay[n] || n);
-        let sapName = sapDisplay[canonical] || sapNormNames.map(n=>sapDisplay[n]||n)[0] || '';
-        const bdName = bdNames.join(' / ');
-        const worker = sapName || bdName || canonical.replace('BD::','');
-        let observation;
-        if (status==='Conforme') observation='Las horas coinciden dentro de la tolerancia definida.';
-        else if (status==='Solo formulario') observation=`Revisar: ${formatHours(bdHours)} h aprobadas en BD.HE no figuran en SAP.`;
-        else if (status==='Solo SAP') observation=`Revisar: ${formatHours(sapHours)} h figuran en SAP sin respaldo aprobado en BD.HE.`;
-        else if (status==='Sin asociación') observation='No fue posible asociar automáticamente este trabajador con un nombre de SAP.';
-        else observation=`Revisar diferencia de ${signedHours(diff)} h entre SAP y BD.HE.`;
-        return { key, canonical, date:source.date, rate:source.rate, worker, bdName, sapName, bdHours, sapHours, diff, status, observation, bdRecords:b?.records||0, sapRecords:s?.records||0 };
-      });
-
-      const summaryMap = new Map();
-      detail.forEach(row => {
-        const key=row.canonical;
-        const current=summaryMap.get(key) || { canonical:key, worker:row.worker, bdNames:new Set(), sapNames:new Set(), bdHours:0, sapHours:0, issues:[], all:[] };
-        if (row.bdName) row.bdName.split(' / ').forEach(n=>current.bdNames.add(n));
-        if (row.sapName) current.sapNames.add(row.sapName);
-        current.bdHours += row.bdHours; current.sapHours += row.sapHours; current.all.push(row);
-        if (row.status!=='Conforme') current.issues.push(row);
-        summaryMap.set(key,current);
-      });
-
-      const summary=[...summaryMap.values()].map(p => {
-        p.bdHours=Number(p.bdHours.toFixed(4)); p.sapHours=Number(p.sapHours.toFixed(4)); p.diff=Number((p.sapHours-p.bdHours).toFixed(4));
-        p.bdName=[...p.bdNames].join(' / '); p.sapName=[...p.sapNames].join(' / ');
-        p.status=p.issues.length ? 'Revisar' : 'Conforme';
-        if (!p.issues.length) p.observation='Horas aprobadas coinciden en BD.HE y SAP.';
-        else {
-          const snippets=p.issues.slice(0,3).map(x=>`${formatDisplayDate(x.date)} ${x.rate}: BD.HE ${formatHours(x.bdHours)} h / SAP ${formatHours(x.sapHours)} h`);
-          p.observation=`Revisar ${snippets.join('; ')}${p.issues.length>3 ? `; y ${p.issues.length-3} incidencia(s) adicional(es)` : ''}.`;
-        }
-        return p;
-      }).sort((a,b)=> a.status.localeCompare(b.status,'es') || a.worker.localeCompare(b.worker,'es'));
-
-      const rates=['50%','75%','100%'];
-      const rateSummary={};
-      rates.forEach(rate => {
-        rateSummary[rate]={
-          bd:bdPeriod.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0),
-          sap:sapPeriod.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0)
-        };
-      });
-
-      const formStates={};
-      bdPeriodAll.forEach(r => { const k=r.normStatus || 'SIN ESTADO'; formStates[k]=(formStates[k]||0)+1; });
-
-      return {
-        year,month,tolerance,approvedOnly,bdPeriod,bdPeriodAll,sapPeriod,detail,summary,rateSummary,formStates,
-        totalBd:bdPeriod.reduce((a,r)=>a+r.hours,0), totalSap:sapPeriod.reduce((a,r)=>a+r.hours,0)
-      };
-    }
-
-    function formatDisplayDate(iso) {
-      if (!iso) return '';
-      const [y,m,d]=iso.split('-'); return `${d}-${m}-${y}`;
-    }
-
-    function runComparison(rebuildMappings=true) {
-      clearMessage();
-      if (!state.bd || !state.sap) return showMessage('Debes cargar ambos archivos antes de comparar.','error');
-      const year=Number($('yearSelect').value), month=Number($('monthSelect').value), tolerance=Number($('tolerance').value || 0);
-      if (!year || !month) return showMessage('Selecciona un año y un mes válidos.','error');
-      showLoading('Comparando BD.HE y SAP...');
-      setTimeout(() => {
-        try {
-          const bdCandidate=state.bd.records.filter(r=>r.year===year && r.month===month && (!$('approvedOnly').checked || isApprovedStatus(r.normStatus)));
-          const sapCandidate=state.sap.records.filter(r=>r.year===year && r.month===month);
-          if (!bdCandidate.length && !sapCandidate.length) throw new Error('No se encontraron registros para el período seleccionado.');
-          if (rebuildMappings) {
-            const mappingData=proposeMappings(bdCandidate,sapCandidate);
-            renderMappings(mappingData);
-          } else getSelectedMappings();
-          state.results=compareData(year,month,tolerance,state.mappings);
-          state.summaryPage=1; state.detailPage=1;
-          renderAll();
-          $('results').classList.add('show');
-          showMessage(`Comparación completada para ${MONTHS[month-1]} de ${year}. Revisa primero las equivalencias de nombres y luego las incidencias.`, 'success');
-          window.scrollTo({top:$('results').offsetTop-18,behavior:'smooth'});
-        } catch(err) { showMessage(err.message || String(err),'error'); }
-        finally { hideLoading(); }
-      },40);
-    }
-
-    function renderAll() {
-      renderKpis(); renderRates(); renderStates(); renderSummary(); renderDetail(); renderReport();
-    }
-
-    function renderKpis() {
-      const r=state.results;
-      const good=r.summary.filter(x=>x.status==='Conforme').length;
-      const review=r.summary.length-good;
-      $('kpiWorkers').textContent=r.summary.length.toLocaleString('es-CL');
-      $('kpiGood').textContent=good.toLocaleString('es-CL');
-      $('kpiReview').textContent=review.toLocaleString('es-CL');
-      $('kpiBd').textContent=formatHours(r.totalBd);
-      $('kpiSap').textContent=formatHours(r.totalSap);
-      $('kpiDiff').textContent=signedHours(r.totalSap-r.totalBd);
-      $('kpiBdRows').textContent=`${r.bdPeriod.length.toLocaleString('es-CL')} registros considerados`;
-      $('kpiSapRows').textContent=`${r.sapPeriod.length.toLocaleString('es-CL')} registros considerados`;
-    }
-
-    function renderRates() {
-      const r=state.results;
-      $('rateGrid').innerHTML=['50%','75%','100%'].map(rate=>{
-        const x=r.rateSummary[rate], max=Math.max(x.bd,x.sap,1), pct=Math.min(100,Math.abs(x.sap-x.bd)/max*100);
-        return `<div class="rate-card"><div class="rate-head"><span>Horas al ${rate}</span><span>${signedHours(x.sap-x.bd)} h</span></div><div class="rate-values"><div><span>BD.HE</span><strong>${formatHours(x.bd)}</strong></div><div><span>SAP</span><strong>${formatHours(x.sap)}</strong></div></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
-      }).join('');
-    }
-
-    function renderStates() {
-      const states=state.results.formStates;
-      const entries=Object.entries(states).sort((a,b)=>b[1]-a[1]);
-      const total=entries.reduce((a,[,v])=>a+v,0) || 1;
-      $('stateSummary').innerHTML=entries.length ? entries.map(([name,count])=>{
-        const pct=count/total*100;
-        const color=name.startsWith('APROBAD')?'var(--green)':name.includes('RECHAZ')?'var(--red)':'var(--yellow)';
-        return `<div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:12px"><strong>${escapeHtml(name)}</strong><span>${count}</span></div><div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
-      }).join('') : '<div style="color:var(--muted);font-size:12px">Sin registros del formulario en el período.</div>';
-    }
-
-    function filteredSummary() {
-      if (!state.results) return [];
-      const q=normalizeText($('summarySearch').value), status=$('summaryStatus').value;
-      return state.results.summary.filter(r => (status==='Todos'||r.status===status) && (!q || normalizeText(`${r.worker} ${r.bdName} ${r.sapName} ${r.observation}`).includes(q)));
-    }
-
-    function renderSummary() {
-      const rows=filteredSummary();
-      const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE_SUMMARY)); state.summaryPage=Math.min(state.summaryPage,pages);
-      const start=(state.summaryPage-1)*PAGE_SIZE_SUMMARY, pageRows=rows.slice(start,start+PAGE_SIZE_SUMMARY);
-      $('summaryBody').innerHTML=pageRows.length ? pageRows.map(r=>`<tr class="${r.status==='Revisar'?'row-issue':''}">
-        <td><strong>${escapeHtml(r.worker)}</strong></td><td>${escapeHtml(r.bdName||'—')}</td><td>${escapeHtml(r.sapName||'—')}</td>
-        <td class="num">${formatHours(r.bdHours)}</td><td class="num">${formatHours(r.sapHours)}</td><td class="num">${signedHours(r.diff)}</td><td class="num">${r.issues.length}</td>
-        <td><span class="status-pill ${statusClass(r.status)}">${r.status}</span></td><td>${escapeHtml(r.observation)}</td></tr>`).join('') : `<tr><td colspan="9" class="empty-row">No hay resultados para los filtros seleccionados.</td></tr>`;
-      $('summaryCount').textContent=`${rows.length} trabajador(es)`;
-      $('summaryPageInfo').textContent=`Página ${state.summaryPage} de ${pages} · ${rows.length} resultado(s)`;
-      $('summaryPrev').disabled=state.summaryPage<=1; $('summaryNext').disabled=state.summaryPage>=pages;
-    }
-
-    function filteredDetail() {
-      if (!state.results) return [];
-      const q=normalizeText($('detailSearch').value), status=$('detailStatus').value;
-      return state.results.detail.filter(r => (status==='Todos'||r.status===status) && (!q || normalizeText(`${r.worker} ${r.date} ${formatDisplayDate(r.date)} ${r.rate} ${r.observation}`).includes(q)));
-    }
-
-    function renderDetail() {
-      const rows=filteredDetail();
-      const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE_DETAIL)); state.detailPage=Math.min(state.detailPage,pages);
-      const start=(state.detailPage-1)*PAGE_SIZE_DETAIL, pageRows=rows.slice(start,start+PAGE_SIZE_DETAIL);
-      $('detailBody').innerHTML=pageRows.length ? pageRows.map(r=>`<tr class="${r.status==='Sin asociación'?'row-danger':r.status!=='Conforme'?'row-issue':''}">
-        <td>${formatDisplayDate(r.date)}</td><td><strong>${escapeHtml(r.worker)}</strong></td><td>${escapeHtml(r.rate)}</td>
-        <td class="num">${formatHours(r.bdHours)}</td><td class="num">${formatHours(r.sapHours)}</td><td class="num">${signedHours(r.diff)}</td>
-        <td><span class="status-pill ${statusClass(r.status)}">${r.status}</span></td><td>${escapeHtml(r.observation)}</td></tr>`).join('') : `<tr><td colspan="8" class="empty-row">No hay resultados para los filtros seleccionados.</td></tr>`;
-      $('detailCount').textContent=`${rows.length} combinación(es) trabajador-fecha-recargo`;
-      $('detailPageInfo').textContent=`Página ${state.detailPage} de ${pages} · ${rows.length} resultado(s)`;
-      $('detailPrev').disabled=state.detailPage<=1; $('detailNext').disabled=state.detailPage>=pages;
-    }
-
-    function reportHtml() {
-      const r=state.results, good=r.summary.filter(x=>x.status==='Conforme'), review=r.summary.filter(x=>x.status==='Revisar');
-      const period=`${MONTHS[r.month-1]} de ${r.year}`;
-      const excluded=r.bdPeriodAll.length-r.bdPeriod.length;
-      return `<h4>Informe de conciliación de horas extras — ${period}</h4>
-        <div class="report-meta">Generado el ${new Date().toLocaleString('es-CL')} · Tolerancia: ${formatHours(r.tolerance)} h · ${r.approvedOnly?'Solo registros aprobados de BD.HE':'Todos los estados de BD.HE'}</div>
-        <p>Se analizaron <strong>${r.summary.length} trabajadores</strong>, comparando cada registro por trabajador, fecha y porcentaje de recargo. El formulario contiene <strong>${formatHours(r.totalBd)} horas</strong> consideradas y SAP contiene <strong>${formatHours(r.totalSap)} horas extras</strong>, con una diferencia neta SAP − BD.HE de <strong>${signedHours(r.totalSap-r.totalBd)} horas</strong>.${excluded>0?` Se excluyeron ${excluded} registro(s) del formulario por no estar aprobados.`:''}</p>
-        <p><strong>${good.length} trabajador(es)</strong> presentan concordancia completa y <strong>${review.length} trabajador(es)</strong> requieren revisión.</p>
-        <h5>Trabajadores con horas conformes</h5>
-        ${good.length?`<ul>${good.map(x=>`<li><strong>${escapeHtml(x.worker)}</strong>: ${formatHours(x.bdHours)} h aprobadas en BD.HE y ${formatHours(x.sapHours)} h en SAP. Horas conformes.</li>`).join('')}</ul>`:'<p>No se identificaron trabajadores completamente conformes.</p>'}
-        <h5>Trabajadores que requieren revisión</h5>
-        ${review.length?`<ul>${review.map(x=>`<li><strong>${escapeHtml(x.worker)}</strong>: ${escapeHtml(x.observation)} Total BD.HE ${formatHours(x.bdHours)} h; total SAP ${formatHours(x.sapHours)} h; diferencia ${signedHours(x.diff)} h.</li>`).join('')}</ul>`:'<p>No se identificaron diferencias para revisar.</p>'}
-        <h5>Conclusión</h5>
-        <p>${review.length ? `Las personas indicadas en la sección de revisión presentan al menos una inconcordancia de fecha, porcentaje o cantidad de horas entre el formulario y SAP. Se recomienda validar el respaldo aprobado y corregir el sistema que corresponda antes del cierre del período.` : `Las horas aprobadas del formulario coinciden con SAP para todos los trabajadores analizados dentro de la tolerancia configurada.`}</p>`;
-    }
-
-    function reportPlainText() {
-      const tmp=document.createElement('div'); tmp.innerHTML=reportHtml(); return tmp.innerText;
-    }
-    function renderReport() { $('reportBody').innerHTML=reportHtml(); }
-
-    function exportResults() {
-      if (!state.results || typeof XLSX==='undefined') return;
-      const r=state.results;
-      const summaryData=r.summary.map(x=>({
-        'Trabajador':x.worker,'Nombre BD.HE':x.bdName,'Nombre SAP':x.sapName,'Horas BD.HE':Number(x.bdHours.toFixed(2)),'Horas SAP':Number(x.sapHours.toFixed(2)),'Diferencia SAP - BD.HE':Number(x.diff.toFixed(2)),'Incidencias':x.issues.length,'Estado':x.status,'Resultado':x.observation
-      }));
-      const detailData=r.detail.map(x=>({
-        'Fecha':formatDisplayDate(x.date),'Trabajador':x.worker,'Recargo':x.rate,'Horas BD.HE':Number(x.bdHours.toFixed(2)),'Horas SAP':Number(x.sapHours.toFixed(2)),'Diferencia SAP - BD.HE':Number(x.diff.toFixed(2)),'Estado':x.status,'Observación':x.observation
-      }));
-      const mappingData=Object.keys(state.mappings).map(bd=>({
-        'Nombre normalizado BD.HE':bd,'Nombre asociado SAP':state.mappings[bd]||'Sin asociación','Confianza':state.mappingMeta[bd]?.level||''
-      }));
-      const metaData=[
-        ['Período',`${MONTHS[r.month-1]} ${r.year}`],['Archivo BD.HE',state.bd.filename],['Hoja BD.HE',state.bd.sheet],['Archivo SAP',state.sap.filename],['Hoja SAP',state.sap.sheet],['Tolerancia (horas)',r.tolerance],['Solo aprobadas',r.approvedOnly?'Sí':'No'],['Horas BD.HE',r.totalBd],['Horas SAP',r.totalSap],['Diferencia',r.totalSap-r.totalBd],['Trabajadores conformes',r.summary.filter(x=>x.status==='Conforme').length],['Trabajadores a revisar',r.summary.filter(x=>x.status==='Revisar').length]
-      ];
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summaryData),'Resumen');
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(detailData),'Detalle');
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(mappingData),'Equivalencias');
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(metaData),'Parámetros');
-      const filename=`Conciliacion_HE_${r.year}_${String(r.month).padStart(2,'0')}.xlsx`;
-      XLSX.writeFile(wb,filename);
-    }
-
-    async function loadFile(kind,file) {
-      if (!file) return;
-      showLoading(`Leyendo ${file.name}...`); clearMessage();
-      try {
-        const workbook=await readWorkbook(file);
-        if (kind==='bd') {
-          state.bd=parseBd(workbook,file.name);
-          $('bdDrop').classList.add('loaded');
-          $('bdMeta').textContent=`${file.name} · Hoja ${state.bd.sheet} · ${state.bd.records.length.toLocaleString('es-CL')} registros válidos`;
-        } else {
-          state.sap=parseSap(workbook,file.name);
-          $('sapDrop').classList.add('loaded');
-          $('sapMeta').textContent=`${file.name} · Hoja ${state.sap.sheet} · ${state.sap.records.length.toLocaleString('es-CL')} registros de horas extra`;
-        }
-        if (state.bd && state.sap) {
-          refreshPeriodOptions(); $('compareBtn').disabled=false;
-          showMessage('Ambos archivos están listos. Selecciona el período y presiona “Comparar archivos”.','info');
-        } else showMessage('Archivo cargado correctamente. Falta cargar el segundo archivo.','success');
-      } catch(err) {
-        showMessage(`${file.name}: ${err.message || err}`,'error');
-        if (kind==='bd') { state.bd=null; $('bdDrop').classList.remove('loaded'); $('bdMeta').textContent='No se pudo procesar el archivo'; }
-        else { state.sap=null; $('sapDrop').classList.remove('loaded'); $('sapMeta').textContent='No se pudo procesar el archivo'; }
-        $('compareBtn').disabled=!(state.bd&&state.sap);
-      } finally { hideLoading(); }
-    }
-
-    function setupDrop(boxId,inputId,kind) {
-      const box=$(boxId), input=$(inputId);
-      input.addEventListener('change',e=>loadFile(kind,e.target.files[0]));
-      ['dragenter','dragover'].forEach(evt=>box.addEventListener(evt,e=>{e.preventDefault();box.classList.add('dragover');}));
-      ['dragleave','drop'].forEach(evt=>box.addEventListener(evt,e=>{e.preventDefault();box.classList.remove('dragover');}));
-      box.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) loadFile(kind,f); });
-    }
-
-    setupDrop('bdDrop','bdFile','bd'); setupDrop('sapDrop','sapFile','sap');
-    $('compareBtn').addEventListener('click',()=>runComparison(true));
-    $('applyMappings').addEventListener('click',()=>runComparison(false));
-    $('yearSelect').addEventListener('change',()=>{
-      if (!state.bd||!state.sap) return;
-      const year=Number($('yearSelect').value);
-      const months=uniqueSorted([...state.bd.records.filter(r=>r.year===year).map(r=>r.month),...state.sap.records.filter(r=>r.year===year).map(r=>r.month)]).sort((a,b)=>a-b);
-      $('monthSelect').value=String(months.at(-1)||'');
-    });
-    $('summarySearch').addEventListener('input',()=>{state.summaryPage=1;renderSummary();});
-    $('summaryStatus').addEventListener('change',()=>{state.summaryPage=1;renderSummary();});
-    $('detailSearch').addEventListener('input',()=>{state.detailPage=1;renderDetail();});
-    $('detailStatus').addEventListener('change',()=>{state.detailPage=1;renderDetail();});
-    $('summaryPrev').addEventListener('click',()=>{state.summaryPage--;renderSummary();});
-    $('summaryNext').addEventListener('click',()=>{state.summaryPage++;renderSummary();});
-    $('detailPrev').addEventListener('click',()=>{state.detailPage--;renderDetail();});
-    $('detailNext').addEventListener('click',()=>{state.detailPage++;renderDetail();});
-    $('copyReport').addEventListener('click',async()=>{
-      try { await navigator.clipboard.writeText(reportPlainText()); showMessage('Informe copiado al portapapeles.','success'); }
-      catch { showMessage('No fue posible copiar automáticamente. Selecciona el texto del informe y cópialo manualmente.','error'); }
-    });
-    $('exportExcel').addEventListener('click',exportResults);
-    $('printReport').addEventListener('click',()=>window.print());
-
-    setTimeout(()=>{
-      if (typeof XLSX==='undefined') showMessage('La librería de Excel no se cargó. Esta página requiere conexión a internet al abrirse para habilitar la lectura de archivos XLSX.','error');
-    },3500);
-  })();
-  </script>
+async function loadFile(kind,file){if(!file)return;showLoading(`Leyendo ${file.name}...`,'Descomprimiendo y revisando las hojas del archivo.');clearMessage();try{const wb=await readXlsx(file,msg=>{$('loadingDetail').textContent=msg});if(kind==='bd'){state.bd=parseBd(wb,file.name);$('bdDrop').classList.add('loaded');$('bdMeta').textContent=`${file.name} · ${state.bd.sheets.length} hoja(s) reconocidas · ${state.bd.records.length.toLocaleString('es-CL')} registros válidos`}else{state.sap=parseSap(wb,file.name);$('sapDrop').classList.add('loaded');$('sapMeta').textContent=`${file.name} · ${state.sap.sheets.length} hoja(s) reconocidas · ${state.sap.records.length.toLocaleString('es-CL')} registros de horas extra`}if(state.bd&&state.sap){refreshPeriods();$('compareBtn').disabled=false;showMessage('Ambos archivos están listos. Selecciona el período y presiona “Comparar archivos”.','info')}else showMessage('Archivo cargado correctamente. Falta cargar el segundo archivo.','success')}catch(e){showMessage(`${file.name}: ${e.message||e}`,'error');if(kind==='bd'){state.bd=null;$('bdDrop').classList.remove('loaded');$('bdMeta').textContent='No se pudo procesar el archivo'}else{state.sap=null;$('sapDrop').classList.remove('loaded');$('sapMeta').textContent='No se pudo procesar el archivo'}$('compareBtn').disabled=!(state.bd&&state.sap)}finally{hideLoading()}}
+function setupDrop(boxId,inputId,kind){const box=$(boxId),input=$(inputId);input.addEventListener('change',e=>loadFile(kind,e.target.files[0]));['dragenter','dragover'].forEach(ev=>box.addEventListener(ev,e=>{e.preventDefault();box.classList.add('dragover')}));['dragleave','drop'].forEach(ev=>box.addEventListener(ev,e=>{e.preventDefault();box.classList.remove('dragover')}));box.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(kind,f)})}
+setupDrop('bdDrop','bdFile','bd');setupDrop('sapDrop','sapFile','sap');$('compareBtn').addEventListener('click',()=>runComparison(true));$('applyMappings').addEventListener('click',()=>runComparison(false));$('yearSelect').addEventListener('change',refreshMonths);$('summarySearch').addEventListener('input',()=>{state.summaryPage=1;renderSummary()});$('summaryStatus').addEventListener('change',()=>{state.summaryPage=1;renderSummary()});$('detailSearch').addEventListener('input',()=>{state.detailPage=1;renderDetail()});$('detailStatus').addEventListener('change',()=>{state.detailPage=1;renderDetail()});$('summaryPrev').addEventListener('click',()=>{state.summaryPage--;renderSummary()});$('summaryNext').addEventListener('click',()=>{state.summaryPage++;renderSummary()});$('detailPrev').addEventListener('click',()=>{state.detailPage--;renderDetail()});$('detailNext').addEventListener('click',()=>{state.detailPage++;renderDetail()});document.addEventListener('click',e=>{const btn=e.target.closest('[data-worker]');if(btn&&state.results)openWorker(btn.dataset.worker)});$('modalClose').addEventListener('click',closeWorker);$('modalClose2').addEventListener('click',closeWorker);$('workerModal').addEventListener('click',e=>{if(e.target===$('workerModal'))closeWorker()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWorker()});$('exportCsv').addEventListener('click',downloadCsv);$('downloadPdf').addEventListener('click',()=>{if(!state.results)return;showLoading('Generando informe PDF...','Preparando resumen ejecutivo y detalle de incidencias.');setTimeout(()=>{try{downloadBlob(buildExecutivePdf(),`Informe_Conciliacion_HE_${state.results.year}_${String(state.results.month).padStart(2,'0')}.pdf`)}finally{hideLoading()}},40)});$('workerPdf').addEventListener('click',()=>{if(!state.activeWorker)return;downloadBlob(buildExecutivePdf(state.activeWorker),`Detalle_HE_${state.activeWorker.worker.replace(/[^A-Za-z0-9]+/g,'_')}_${state.results.year}_${String(state.results.month).padStart(2,'0')}.pdf`)});
+if(typeof DecompressionStream==='undefined')showMessage('Este navegador no admite la lectura local de archivos XLSX. Abre la página en Microsoft Edge o Google Chrome actualizado.','error');
+})();
+</script>
 </body>
 </html>
