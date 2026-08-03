@@ -1,0 +1,1112 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparador de Horas Extras | BD.HE vs SAP</title>
+  <style>
+    :root {
+      --navy: #0b2742;
+      --navy-2: #123b61;
+      --blue: #1769aa;
+      --orange: #f28c28;
+      --green: #16835b;
+      --red: #c63f45;
+      --yellow: #d99b16;
+      --teal: #0f7c83;
+      --ink: #17212b;
+      --muted: #667585;
+      --line: #dce4eb;
+      --soft: #f4f7fa;
+      --white: #ffffff;
+      --shadow: 0 12px 30px rgba(9, 36, 62, .10);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef4f8 0, #f8fafc 340px, #f7f9fb 100%);
+    }
+
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      background: linear-gradient(120deg, var(--navy), var(--navy-2));
+      color: white;
+      padding: 28px 0 88px;
+      position: relative;
+      overflow: hidden;
+    }
+    .topbar::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -140px;
+      top: -230px;
+      border: 70px solid rgba(242, 140, 40, .22);
+      border-radius: 50%;
+    }
+    .topbar::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: 180px;
+      bottom: -210px;
+      border: 55px solid rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+
+    .container { width: min(1440px, calc(100% - 40px)); margin: 0 auto; }
+    .hero { display: flex; align-items: center; justify-content: space-between; gap: 28px; position: relative; z-index: 1; }
+    .brand-line { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; opacity: .88; }
+    .brand-mark { width: 36px; height: 8px; background: var(--orange); border-radius: 999px; box-shadow: 17px 0 0 rgba(255,255,255,.9); }
+    h1 { margin: 0; font-size: clamp(30px, 4vw, 52px); line-height: 1.05; letter-spacing: -.035em; max-width: 850px; }
+    .subtitle { max-width: 840px; margin: 16px 0 0; color: #dce9f5; line-height: 1.55; font-size: 16px; }
+    .privacy-pill { min-width: 240px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18); padding: 15px 17px; border-radius: 14px; backdrop-filter: blur(8px); font-size: 13px; line-height: 1.45; }
+    .privacy-pill strong { display:block; color:#fff; margin-bottom:4px; }
+
+    main { margin-top: -58px; padding-bottom: 60px; position: relative; z-index: 2; }
+    .card { background: var(--white); border: 1px solid rgba(214,224,233,.9); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .workspace { padding: 22px; }
+    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
+    .section-head h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; color: var(--navy); }
+    .section-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .step { display:inline-grid; place-items:center; min-width:28px; height:28px; border-radius:9px; background:#e9f2f9; color:var(--blue); font-weight:800; font-size:13px; margin-right:9px; }
+
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .upload-box {
+      border: 1.5px dashed #aabccc;
+      border-radius: 14px;
+      padding: 18px;
+      min-height: 156px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: .2s ease;
+      background: #fbfdff;
+    }
+    .upload-box:hover, .upload-box.dragover { border-color: var(--blue); background:#f2f8fc; transform: translateY(-1px); }
+    .upload-box.loaded { border-style: solid; border-color: #92cdb4; background: #f3fbf7; }
+    .upload-title { display:flex; align-items:center; gap:12px; }
+    .file-icon { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; background:#e9f2f9; color:var(--blue); font-weight:900; }
+    .upload-box.loaded .file-icon { background:#dff4e9; color:var(--green); }
+    .upload-title h3 { margin:0; font-size:15px; color:var(--navy); }
+    .upload-title p { margin:4px 0 0; font-size:12px; color:var(--muted); }
+    .file-meta { margin-top:14px; min-height:22px; color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .file-label { display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; width:max-content; border:0; color:white; background:var(--navy-2); padding:10px 14px; border-radius:10px; font-weight:700; font-size:13px; }
+    .file-label:hover { background:var(--navy); }
+    input[type=file] { display:none; }
+
+    .control-panel { margin-top: 18px; padding-top:18px; border-top:1px solid var(--line); }
+    .controls { display:grid; grid-template-columns: 1fr 1fr 1fr 1.25fr auto; gap:12px; align-items:end; }
+    .field label { display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#617283; margin:0 0 7px 2px; }
+    .field select, .field input[type=number] { width:100%; height:42px; border:1px solid #cfdbe5; background:white; border-radius:10px; padding:0 11px; color:var(--ink); outline:none; }
+    .field select:focus, .field input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(23,105,170,.12); }
+    .switch-field { height:42px; display:flex; align-items:center; gap:10px; padding:0 12px; border:1px solid #cfdbe5; border-radius:10px; background:#fff; color:#3d4c59; font-size:13px; }
+    .switch-field input { accent-color:var(--blue); width:17px; height:17px; }
+    .primary-btn { height:42px; border:0; border-radius:10px; padding:0 19px; background:linear-gradient(120deg, var(--orange), #e77714); color:white; font-weight:800; box-shadow:0 8px 18px rgba(242,140,40,.25); white-space:nowrap; }
+    .primary-btn:hover { filter:brightness(.96); transform:translateY(-1px); }
+    .primary-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+    .secondary-btn { height:38px; border:1px solid #cbd7e1; border-radius:10px; padding:0 13px; background:white; color:var(--navy-2); font-weight:750; }
+    .secondary-btn:hover { background:#f3f7fa; }
+    .danger-outline { color:var(--red); }
+
+    .message { display:none; margin-top:14px; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.45; }
+    .message.show { display:block; }
+    .message.error { background:#fff0f1; color:#962c32; border:1px solid #f1c3c6; }
+    .message.info { background:#edf6fc; color:#215f8d; border:1px solid #c4e1f2; }
+    .message.success { background:#effaf4; color:#116743; border:1px solid #bde4cf; }
+
+    #results { display:none; }
+    #results.show { display:block; }
+    .results-space { margin-top:18px; }
+    .kpi-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; }
+    .kpi { padding:16px; min-height:112px; position:relative; overflow:hidden; }
+    .kpi::after { content:""; position:absolute; width:72px; height:72px; border-radius:50%; right:-27px; bottom:-30px; background:rgba(23,105,170,.08); }
+    .kpi .label { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.055em; }
+    .kpi .value { margin-top:10px; font-size:27px; font-weight:850; color:var(--navy); letter-spacing:-.035em; }
+    .kpi .small { margin-top:4px; font-size:11px; color:var(--muted); }
+    .kpi.good .value { color:var(--green); }
+    .kpi.bad .value { color:var(--red); }
+    .kpi.warn .value { color:var(--yellow); }
+
+    .grid-2 { display:grid; grid-template-columns: minmax(0, 1.85fr) minmax(300px, .75fr); gap:16px; margin-top:16px; }
+    .panel { padding:18px; }
+    .panel h3 { margin:0; color:var(--navy); font-size:17px; letter-spacing:-.015em; }
+    .panel-sub { margin:5px 0 0; color:var(--muted); font-size:12px; line-height:1.45; }
+
+    .rate-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
+    .rate-card { border:1px solid var(--line); border-radius:12px; padding:13px; background:#fbfdff; }
+    .rate-head { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; font-weight:800; color:var(--navy); }
+    .rate-values { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .rate-values span { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; font-weight:750; }
+    .rate-values strong { display:block; margin-top:3px; font-size:17px; }
+    .bar-track { height:7px; border-radius:999px; background:#e9eff4; margin-top:11px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--blue),var(--teal)); width:0; }
+
+    .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .badge { display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border-radius:999px; font-size:10px; font-weight:800; white-space:nowrap; }
+    .badge::before { content:""; width:6px; height:6px; border-radius:50%; }
+    .badge.good { background:#eaf8f1; color:#126a47; } .badge.good::before{background:var(--green);}
+    .badge.diff { background:#fff6e4; color:#93630b; } .badge.diff::before{background:var(--yellow);}
+    .badge.form { background:#edf5fb; color:#236895; } .badge.form::before{background:var(--blue);}
+    .badge.sap { background:#f5eefb; color:#704098; } .badge.sap::before{background:#8552ad;}
+    .badge.unmatched { background:#fff0f1; color:#9a3035; } .badge.unmatched::before{background:var(--red);}
+
+    .mapping-card { margin-top:16px; }
+    details.card > summary { list-style:none; padding:17px 19px; cursor:pointer; font-weight:800; color:var(--navy); display:flex; justify-content:space-between; align-items:center; }
+    details.card > summary::-webkit-details-marker { display:none; }
+    details.card > summary::after { content:"+"; font-size:20px; color:var(--blue); }
+    details[open].card > summary::after { content:"−"; }
+    .mapping-content { padding:0 19px 19px; border-top:1px solid var(--line); }
+    .mapping-note { font-size:12px; color:var(--muted); line-height:1.5; margin:13px 0; }
+    .mapping-table-wrap { max-height:360px; overflow:auto; border:1px solid var(--line); border-radius:11px; }
+    .mapping-table select { width:100%; min-width:240px; border:1px solid #ccd8e2; border-radius:8px; padding:7px; background:white; }
+    .confidence { font-size:10px; font-weight:800; padding:4px 7px; border-radius:999px; }
+    .confidence.high { color:#126a47; background:#eaf8f1; }
+    .confidence.medium { color:#93630b; background:#fff6e4; }
+    .confidence.low { color:#9a3035; background:#fff0f1; }
+
+    .table-card { margin-top:16px; overflow:hidden; }
+    .table-toolbar { padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--line); }
+    .toolbar-left h3 { margin:0; font-size:17px; color:var(--navy); }
+    .toolbar-left p { margin:4px 0 0; color:var(--muted); font-size:11px; }
+    .toolbar-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .search { height:38px; min-width:220px; border:1px solid #cfdbe5; border-radius:10px; padding:0 11px; outline:none; }
+    .filter-select { height:38px; border:1px solid #cfdbe5; border-radius:10px; padding:0 9px; background:white; }
+    .table-scroll { overflow:auto; max-height:560px; }
+    table { width:100%; border-collapse:collapse; min-width:980px; }
+    th { position:sticky; top:0; z-index:2; background:#f2f6f9; color:#536676; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.05em; padding:11px 12px; border-bottom:1px solid var(--line); }
+    td { padding:11px 12px; border-bottom:1px solid #edf1f4; font-size:12px; vertical-align:top; }
+    tbody tr:hover { background:#f8fbfd; }
+    td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+    .status-pill { display:inline-flex; align-items:center; justify-content:center; padding:5px 8px; border-radius:999px; font-size:10px; font-weight:850; white-space:nowrap; }
+    .status-Conforme { color:#126a47; background:#e9f7f0; }
+    .status-Revisar, .status-Diferencia { color:#8d5d09; background:#fff4df; }
+    .status-Solo-formulario { color:#1d628f; background:#eaf4fb; }
+    .status-Solo-SAP { color:#6b3b91; background:#f3ecf9; }
+    .status-Sin-asociación { color:#982e34; background:#ffedef; }
+    .row-issue { background:#fffdfa; }
+    .row-danger { background:#fffafb; }
+    .empty-row { text-align:center; padding:28px; color:var(--muted); }
+    .pagination { display:flex; justify-content:space-between; align-items:center; padding:12px 17px; border-top:1px solid var(--line); color:var(--muted); font-size:11px; }
+    .page-buttons { display:flex; gap:7px; }
+    .page-buttons button { width:34px; height:32px; border:1px solid #cfdbe5; background:white; border-radius:8px; color:var(--navy); }
+    .page-buttons button:disabled { opacity:.4; cursor:not-allowed; }
+
+    .report-card { margin-top:16px; padding:20px; }
+    .report-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+    .report-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .report-body { margin-top:16px; border:1px solid var(--line); background:#fcfdfe; border-radius:12px; padding:18px; line-height:1.55; font-size:13px; max-height:560px; overflow:auto; }
+    .report-body h4 { color:var(--navy); margin:0 0 8px; font-size:16px; }
+    .report-body h5 { color:var(--navy-2); margin:18px 0 7px; font-size:13px; }
+    .report-body ul { margin:7px 0 0 20px; padding:0; }
+    .report-body li { margin:5px 0; }
+    .report-meta { color:var(--muted); font-size:11px; }
+
+    .method { margin-top:16px; padding:17px 19px; box-shadow:none; }
+    .method-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+    .method-item strong { display:block; color:var(--navy); font-size:12px; margin-bottom:4px; }
+    .method-item span { color:var(--muted); font-size:11px; line-height:1.45; }
+
+    footer { text-align:center; color:#758391; font-size:11px; padding:26px 0 4px; }
+
+    .loading-overlay { position:fixed; inset:0; background:rgba(9,31,51,.42); display:none; align-items:center; justify-content:center; z-index:50; backdrop-filter:blur(3px); }
+    .loading-overlay.show { display:flex; }
+    .loader-box { background:white; border-radius:15px; padding:22px 26px; min-width:270px; box-shadow:var(--shadow); text-align:center; }
+    .spinner { width:36px; height:36px; border:4px solid #dce8f1; border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media (max-width: 1180px) {
+      .kpi-grid { grid-template-columns:repeat(3,1fr); }
+      .controls { grid-template-columns:repeat(3,1fr); }
+      .primary-btn { width:100%; }
+    }
+    @media (max-width: 850px) {
+      .hero { flex-direction:column; align-items:flex-start; }
+      .privacy-pill { width:100%; }
+      .upload-grid, .grid-2 { grid-template-columns:1fr; }
+      .controls { grid-template-columns:1fr 1fr; }
+      .kpi-grid { grid-template-columns:1fr 1fr; }
+      .rate-grid, .method-grid { grid-template-columns:1fr; }
+      .table-toolbar, .report-head { flex-direction:column; align-items:stretch; }
+      .toolbar-actions { width:100%; }
+      .search { flex:1; min-width:160px; }
+    }
+    @media (max-width: 560px) {
+      .container { width:min(100% - 22px, 1440px); }
+      .topbar { padding-top:22px; }
+      .workspace { padding:15px; }
+      .controls, .kpi-grid { grid-template-columns:1fr; }
+      .kpi { min-height:auto; }
+    }
+
+    @media print {
+      body { background:white; }
+      .topbar { padding:18px 0 26px; }
+      main { margin-top:0; }
+      .workspace, .mapping-card, .detail-card, footer, .no-print { display:none !important; }
+      #results { display:block !important; }
+      .kpi-grid { grid-template-columns:repeat(3,1fr); }
+      .card { box-shadow:none; break-inside:avoid; }
+      .grid-2 { grid-template-columns:1fr; }
+      .report-body { max-height:none; overflow:visible; }
+      .report-card { border:0; padding:0; margin-top:16px; }
+      .report-actions { display:none; }
+      .container { width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container hero">
+      <div>
+        <div class="brand-line"><span class="brand-mark"></span> Control de horas extras</div>
+        <h1>Comparador BD.HE versus SAP</h1>
+        <p class="subtitle">Carga ambos Excel, selecciona el período y valida automáticamente si las horas aprobadas del formulario coinciden con las registradas en SAP por trabajador, fecha y porcentaje de recargo.</p>
+      </div>
+      <div class="privacy-pill">
+        <strong>Procesamiento local</strong>
+        Los archivos se analizan dentro de este navegador. La página no envía los datos a un servidor.
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card workspace no-print">
+      <div class="section-head">
+        <div>
+          <h2><span class="step">1</span>Cargar archivos y definir período</h2>
+          <p>La estructura se detecta automáticamente, incluso cuando el encabezado de BD.HE no está en la primera fila.</p>
+        </div>
+      </div>
+
+      <div class="upload-grid">
+        <div class="upload-box" id="bdDrop">
+          <div>
+            <div class="upload-title">
+              <div class="file-icon">HE</div>
+              <div>
+                <h3>Formulario BD.HE</h3>
+                <p>Debe contener RUT, fecha, horas, porcentaje y estado.</p>
+              </div>
+            </div>
+            <div class="file-meta" id="bdMeta">Ningún archivo seleccionado</div>
+          </div>
+          <label class="file-label" for="bdFile">Seleccionar BD.HE</label>
+          <input type="file" id="bdFile" accept=".xlsx,.xls,.xlsm" />
+        </div>
+
+        <div class="upload-box" id="sapDrop">
+          <div>
+            <div class="upload-title">
+              <div class="file-icon">SAP</div>
+              <div>
+                <h3>Horas extraídas desde SAP</h3>
+                <p>Debe contener nombre, fecha, horas y clase 1214/1215/1216.</p>
+              </div>
+            </div>
+            <div class="file-meta" id="sapMeta">Ningún archivo seleccionado</div>
+          </div>
+          <label class="file-label" for="sapFile">Seleccionar archivo SAP</label>
+          <input type="file" id="sapFile" accept=".xlsx,.xls,.xlsm" />
+        </div>
+      </div>
+
+      <div class="control-panel">
+        <div class="controls">
+          <div class="field">
+            <label for="yearSelect">Año</label>
+            <select id="yearSelect"><option value="">Seleccione</option></select>
+          </div>
+          <div class="field">
+            <label for="monthSelect">Mes</label>
+            <select id="monthSelect">
+              <option value="">Seleccione</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tolerance">Tolerancia (horas)</label>
+            <input id="tolerance" type="number" min="0" max="1" step="0.01" value="0.05" title="0,05 horas equivalen a 3 minutos" />
+          </div>
+          <div class="field">
+            <label>Filtro del formulario</label>
+            <div class="switch-field"><input id="approvedOnly" type="checkbox" checked /> <span>Comparar solo registros aprobados</span></div>
+          </div>
+          <button class="primary-btn" id="compareBtn" disabled>Comparar archivos</button>
+        </div>
+        <div class="message" id="messageBox"></div>
+      </div>
+    </section>
+
+    <section id="results" class="results-space">
+      <div class="kpi-grid">
+        <article class="card kpi"><div class="label">Trabajadores analizados</div><div class="value" id="kpiWorkers">0</div><div class="small">Con horas en uno o ambos archivos</div></article>
+        <article class="card kpi good"><div class="label">Trabajadores conformes</div><div class="value" id="kpiGood">0</div><div class="small">Sin diferencias de fecha, recargo u horas</div></article>
+        <article class="card kpi bad"><div class="label">Trabajadores a revisar</div><div class="value" id="kpiReview">0</div><div class="small">Con al menos una incongruencia</div></article>
+        <article class="card kpi"><div class="label">Horas aprobadas BD.HE</div><div class="value" id="kpiBd">0,00</div><div class="small" id="kpiBdRows">0 registros considerados</div></article>
+        <article class="card kpi"><div class="label">Horas extras SAP</div><div class="value" id="kpiSap">0,00</div><div class="small" id="kpiSapRows">0 registros considerados</div></article>
+        <article class="card kpi warn"><div class="label">Diferencia neta SAP − BD.HE</div><div class="value" id="kpiDiff">0,00</div><div class="small">La validación final se realiza por detalle</div></article>
+      </div>
+
+      <div class="grid-2">
+        <article class="card panel">
+          <h3>Comparación por porcentaje de recargo</h3>
+          <p class="panel-sub">Los totales se muestran separados para evitar compensaciones entre horas al 50%, 75% y 100%.</p>
+          <div class="rate-grid" id="rateGrid"></div>
+          <div class="legend">
+            <span class="badge good">Conforme</span><span class="badge diff">Diferencia</span><span class="badge form">Solo formulario</span><span class="badge sap">Solo SAP</span><span class="badge unmatched">Sin asociación</span>
+          </div>
+        </article>
+        <article class="card panel">
+          <h3>Control de registros</h3>
+          <p class="panel-sub">Resumen de estados detectados en el formulario durante el período seleccionado.</p>
+          <div id="stateSummary" style="margin-top:15px"></div>
+        </article>
+      </div>
+
+      <details class="card mapping-card no-print" id="mappingDetails">
+        <summary>Equivalencias de nombres BD.HE → SAP</summary>
+        <div class="mapping-content">
+          <p class="mapping-note">SAP utiliza un número de personal diferente al RUT del formulario. Por eso la relación se propone mediante el nombre normalizado. Revisa las asociaciones de confianza media o baja y luego presiona <strong>Aplicar equivalencias</strong>.</p>
+          <div class="mapping-table-wrap">
+            <table class="mapping-table">
+              <thead><tr><th>Nombre en BD.HE</th><th>Nombre asociado en SAP</th><th>Confianza</th></tr></thead>
+              <tbody id="mappingBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="secondary-btn" id="applyMappings">Aplicar equivalencias</button></div>
+        </div>
+      </details>
+
+      <section class="card table-card summary-card">
+        <div class="table-toolbar">
+          <div class="toolbar-left"><h3>Resumen por trabajador</h3><p id="summaryCount">0 trabajadores</p></div>
+          <div class="toolbar-actions no-print">
+            <input class="search" id="summarySearch" placeholder="Buscar trabajador..." />
+            <select class="filter-select" id="summaryStatus"><option value="Todos">Todos los estados</option><option value="Conforme">Conformes</option><option value="Revisar">A revisar</option></select>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Trabajador</th><th>Nombre BD.HE</th><th>Nombre SAP</th><th class="num">Horas BD.HE</th><th class="num">Horas SAP</th><th class="num">Diferencia</th><th class="num">Incidencias</th><th>Estado</th><th>Resultado</th></tr></thead>
+            <tbody id="summaryBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination"><span id="summaryPageInfo"></span><div class="page-buttons"><button id="summaryPrev">‹</button><button id="summaryNext">›</button></div></div>
+      </section>
+
+      <section class="card table-card detail-card">
+        <div class="table-toolbar">
+          <div class="toolbar-left"><h3>Detalle de conciliación</h3><p id="detailCount">0 combinaciones trabajador-fecha-recargo</p></div>
+          <div class="toolbar-actions no-print">
+            <input class="search" id="detailSearch" placeholder="Buscar trabajador o fecha..." />
+            <select class="filter-select" id="detailStatus"><option value="Todos">Todos los estados</option><option value="Conforme">Conforme</option><option value="Diferencia">Diferencia</option><option value="Solo formulario">Solo formulario</option><option value="Solo SAP">Solo SAP</option><option value="Sin asociación">Sin asociación</option></select>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Fecha</th><th>Trabajador</th><th>Recargo</th><th class="num">Horas BD.HE</th><th class="num">Horas SAP</th><th class="num">Diferencia</th><th>Estado</th><th>Observación</th></tr></thead>
+            <tbody id="detailBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination"><span id="detailPageInfo"></span><div class="page-buttons"><button id="detailPrev">‹</button><button id="detailNext">›</button></div></div>
+      </section>
+
+      <section class="card report-card">
+        <div class="report-head">
+          <div><h3 style="margin:0;color:var(--navy)">Informe final automático</h3><p class="panel-sub">Texto preparado para revisión, respaldo o envío.</p></div>
+          <div class="report-actions no-print">
+            <button class="secondary-btn" id="copyReport">Copiar informe</button>
+            <button class="secondary-btn" id="exportExcel">Descargar Excel</button>
+            <button class="secondary-btn" id="printReport">Guardar como PDF</button>
+          </div>
+        </div>
+        <div class="report-body" id="reportBody"></div>
+      </section>
+
+      <section class="card method">
+        <div class="method-grid">
+          <div class="method-item"><strong>Unidad de comparación</strong><span>Trabajador + fecha + recargo 50%, 75% o 100%.</span></div>
+          <div class="method-item"><strong>Clases SAP</strong><span>1214 = 50%, 1215 = 75%, 1216 = 100%.</span></div>
+          <div class="method-item"><strong>Estado BD.HE</strong><span>Por defecto se consideran únicamente registros “Aprobada”.</span></div>
+          <div class="method-item"><strong>Tolerancia</strong><span>0,05 horas equivale a 3 minutos y absorbe diferencias como 23:59 versus 24:00.</span></div>
+        </div>
+      </section>
+    </section>
+
+    <footer>Comparador de horas extras · BD.HE / SAP · Procesamiento local en el navegador</footer>
+  </main>
+
+  <div class="loading-overlay" id="loading"><div class="loader-box"><div class="spinner"></div><strong id="loadingText">Procesando archivos...</strong></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const PAGE_SIZE_SUMMARY = 25;
+    const PAGE_SIZE_DETAIL = 80;
+
+    const state = {
+      bd: null,
+      sap: null,
+      results: null,
+      mappings: {},
+      mappingMeta: {},
+      summaryPage: 1,
+      detailPage: 1
+    };
+
+    const $ = id => document.getElementById(id);
+
+    function showLoading(text = 'Procesando archivos...') {
+      $('loadingText').textContent = text;
+      $('loading').classList.add('show');
+    }
+    function hideLoading() { $('loading').classList.remove('show'); }
+
+    function showMessage(text, type = 'info') {
+      const box = $('messageBox');
+      box.textContent = text;
+      box.className = `message show ${type}`;
+    }
+    function clearMessage() { $('messageBox').className = 'message'; $('messageBox').textContent = ''; }
+
+    function normalizeText(value) {
+      return String(value ?? '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\u00a0/g, ' ')
+        .toUpperCase()
+        .replace(/[^A-Z0-9% ]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function normalizeHeader(value) {
+      return normalizeText(value).replace(/%/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    function formatHours(value) {
+      const n = Number(value || 0);
+      return n.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function signedHours(value) {
+      const n = Number(value || 0);
+      const prefix = n > 0 ? '+' : '';
+      return prefix + formatHours(n);
+    }
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    }
+    function statusClass(status) { return `status-${status.replace(/\s+/g,'-')}`; }
+
+    function parseExcelDate(value) {
+      if (value == null || value === '') return null;
+      if (value instanceof Date && !isNaN(value)) {
+        return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+      }
+      if (typeof value === 'number' && typeof XLSX !== 'undefined') {
+        const d = XLSX.SSF.parse_date_code(value);
+        if (d && d.y && d.m && d.d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+      }
+      const s = String(value).trim();
+      let m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
+      if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+      m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+      const d = new Date(s);
+      if (!isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      return null;
+    }
+
+    function parseHours(value) {
+      if (value == null || value === '') return 0;
+      if (value instanceof Date && !isNaN(value)) return value.getHours() + value.getMinutes()/60 + value.getSeconds()/3600;
+      if (typeof value === 'number') return value >= 0 && value < 1 ? value * 24 : value;
+      const s = String(value).trim().replace(',', '.');
+      const m = s.match(/^(\d{1,3}):(\d{1,2})(?::(\d{1,2}))?$/);
+      if (m) return Number(m[1]) + Number(m[2])/60 + Number(m[3] || 0)/3600;
+      const n = Number(s.replace(/[^0-9.\-]/g,''));
+      if (Number.isFinite(n)) return n >= 0 && n < 1 ? n * 24 : n;
+      return 0;
+    }
+
+    function rateFromBd(value) {
+      if (value == null || value === '') return '';
+      const s = String(value).trim().replace(',', '.');
+      if (s.includes('%')) {
+        const n = Number(s.replace(/[^0-9.]/g,''));
+        if (Number.isFinite(n)) return `${Math.round(n)}%`;
+      }
+      const n = Number(s);
+      if (!Number.isFinite(n)) return '';
+      if (Math.abs(n - .5) < .02 || Math.abs(n - 50) < .2) return '50%';
+      if (Math.abs(n - .75) < .02 || Math.abs(n - 75) < .2) return '75%';
+      if (Math.abs(n - 1) < .02 || Math.abs(n - 100) < .2) return '100%';
+      return n <= 1.5 ? `${Math.round(n*100)}%` : `${Math.round(n)}%`;
+    }
+
+    function rateFromSap(code, text) {
+      const c = String(code ?? '').trim();
+      if (c === '1214') return '50%';
+      if (c === '1215') return '75%';
+      if (c === '1216') return '100%';
+      const t = normalizeText(text);
+      if (t.includes('50%')) return '50%';
+      if (t.includes('75%')) return '75%';
+      if (t.includes('100%')) return '100%';
+      return '';
+    }
+
+    function findHeaderRow(rows, groups) {
+      let best = { index: -1, score: 0 };
+      const limit = Math.min(rows.length, 30);
+      for (let i=0; i<limit; i++) {
+        const headers = (rows[i] || []).map(normalizeHeader);
+        let score = 0;
+        groups.forEach(group => {
+          if (group.some(alias => headers.includes(normalizeHeader(alias)))) score++;
+        });
+        if (score > best.score) best = { index:i, score };
+      }
+      return best;
+    }
+
+    function buildColumnMap(headerRow) {
+      const map = {};
+      headerRow.forEach((value, idx) => {
+        const key = normalizeHeader(value);
+        if (key && map[key] == null) map[key] = idx;
+      });
+      return map;
+    }
+
+    function findColumn(map, aliases, required = true) {
+      for (const alias of aliases) {
+        const key = normalizeHeader(alias);
+        if (map[key] != null) return map[key];
+      }
+      if (required) throw new Error(`No se encontró la columna: ${aliases[0]}`);
+      return null;
+    }
+
+    function selectWorksheet(workbook, type) {
+      let best = null;
+      workbook.SheetNames.forEach(name => {
+        const sheet = workbook.Sheets[name];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header:1, raw:true, defval:null, blankrows:false });
+        const groups = type === 'bd'
+          ? [['RUT'],['Fecha inicio'],['Horas trabajadas'],['% hrs extras','hrs extras'],['Estado']]
+          : [['Nombre del empleado o candidato'],['Fecha'],['Horas'],['Clase absent./pres.','Txt.cl.pres./ab.']];
+        const header = findHeaderRow(rows, groups);
+        if (!best || header.score > best.score) best = { name, rows, headerIndex:header.index, score:header.score };
+      });
+      const minScore = type === 'bd' ? 4 : 3;
+      if (!best || best.headerIndex < 0 || best.score < minScore) throw new Error(`No fue posible reconocer la estructura del archivo ${type === 'bd' ? 'BD.HE' : 'SAP'}.`);
+      return best;
+    }
+
+    async function readWorkbook(file) {
+      if (typeof XLSX === 'undefined') throw new Error('No se pudo cargar la librería para leer Excel. Verifica tu conexión a internet y vuelve a abrir la página.');
+      const data = await file.arrayBuffer();
+      return XLSX.read(data, { type:'array', cellDates:false, cellNF:false, cellText:false });
+    }
+
+    function parseBd(workbook, filename) {
+      const selected = selectWorksheet(workbook, 'bd');
+      const headers = selected.rows[selected.headerIndex];
+      const map = buildColumnMap(headers);
+      const col = {
+        first: findColumn(map, ['Nombre'], false),
+        last: findColumn(map, ['Apellidos','Apellido'], false),
+        full: findColumn(map, ['Nombre completo'], false),
+        rut: findColumn(map, ['RUT'], false),
+        date: findColumn(map, ['Fecha inicio']),
+        hours: findColumn(map, ['Horas trabajadas']),
+        rate: findColumn(map, ['% hrs extras','hrs extras']),
+        status: findColumn(map, ['Estado']),
+        comments: findColumn(map, ['Comentarios'], false)
+      };
+      const records = [];
+      const statusCounts = {};
+      for (let i=selected.headerIndex+1; i<selected.rows.length; i++) {
+        const row = selected.rows[i] || [];
+        const date = parseExcelDate(row[col.date]);
+        if (!date) continue;
+        const fullCandidate = col.full != null ? row[col.full] : '';
+        const name = String(fullCandidate || `${col.first != null ? row[col.first] || '' : ''} ${col.last != null ? row[col.last] || '' : ''}`).trim();
+        if (!name) continue;
+        const status = String(row[col.status] ?? '').trim();
+        const normalizedStatus = normalizeText(status);
+        statusCounts[normalizedStatus || 'SIN ESTADO'] = (statusCounts[normalizedStatus || 'SIN ESTADO'] || 0) + 1;
+        records.push({
+          sourceRow: i+1,
+          name,
+          normName: normalizeText(name),
+          rut: col.rut != null ? String(row[col.rut] ?? '').trim() : '',
+          date,
+          year: Number(date.slice(0,4)),
+          month: Number(date.slice(5,7)),
+          hours: parseHours(row[col.hours]),
+          rate: rateFromBd(row[col.rate]),
+          status,
+          normStatus: normalizedStatus,
+          comments: col.comments != null ? String(row[col.comments] ?? '').trim() : ''
+        });
+      }
+      return { filename, sheet:selected.name, records, statusCounts, headerRow:selected.headerIndex+1 };
+    }
+
+    function parseSap(workbook, filename) {
+      const selected = selectWorksheet(workbook, 'sap');
+      const headers = selected.rows[selected.headerIndex];
+      const map = buildColumnMap(headers);
+      const col = {
+        personnel: findColumn(map, ['Número de personal','Numero de personal'], false),
+        name: findColumn(map, ['Nombre del empleado o candidato','Nombre empleado']),
+        date: findColumn(map, ['Fecha']),
+        hours: findColumn(map, ['Horas']),
+        code: findColumn(map, ['Clase absent./pres.','Clase absent pres'], false),
+        text: findColumn(map, ['Txt.cl.pres./ab.','Txt cl pres ab'], false)
+      };
+      const records = [];
+      for (let i=selected.headerIndex+1; i<selected.rows.length; i++) {
+        const row = selected.rows[i] || [];
+        const date = parseExcelDate(row[col.date]);
+        if (!date) continue;
+        const name = String(row[col.name] ?? '').trim();
+        if (!name) continue;
+        const rate = rateFromSap(col.code != null ? row[col.code] : '', col.text != null ? row[col.text] : '');
+        if (!rate) continue;
+        records.push({
+          sourceRow: i+1,
+          personnel: col.personnel != null ? String(row[col.personnel] ?? '').trim() : '',
+          name,
+          normName: normalizeText(name),
+          date,
+          year: Number(date.slice(0,4)),
+          month: Number(date.slice(5,7)),
+          hours: Number(row[col.hours] || 0),
+          rate,
+          code: col.code != null ? String(row[col.code] ?? '').trim() : '',
+          text: col.text != null ? String(row[col.text] ?? '').trim() : ''
+        });
+      }
+      return { filename, sheet:selected.name, records, headerRow:selected.headerIndex+1 };
+    }
+
+    function uniqueSorted(values) { return [...new Set(values.filter(v => v !== null && v !== undefined && v !== ''))].sort((a,b) => (typeof a === 'number' && typeof b === 'number') ? a-b : String(a).localeCompare(String(b),'es')); }
+
+    function refreshPeriodOptions() {
+      if (!state.bd || !state.sap) return;
+      const years = uniqueSorted([...state.bd.records.map(r=>r.year), ...state.sap.records.map(r=>r.year)]).sort((a,b)=>a-b);
+      $('yearSelect').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      const has2025 = years.includes(2025);
+      $('yearSelect').value = has2025 ? '2025' : String(years.at(-1) || '');
+      const year = Number($('yearSelect').value);
+      const months = uniqueSorted([
+        ...state.bd.records.filter(r=>r.year===year).map(r=>r.month),
+        ...state.sap.records.filter(r=>r.year===year).map(r=>r.month)
+      ]).sort((a,b)=>a-b);
+      $('monthSelect').value = months.includes(12) ? '12' : String(months.at(-1) || '');
+    }
+
+    function isApprovedStatus(value) { return normalizeText(value).startsWith('APROBAD'); }
+
+    function nameScore(bdName, sapName) {
+      const b = normalizeText(bdName).split(' ').filter(Boolean);
+      const s = normalizeText(sapName).split(' ').filter(Boolean);
+      if (!b.length || !s.length) return 0;
+      const bSet = new Set(b), sSet = new Set(s);
+      const intersection = b.filter(t => sSet.has(t)).length;
+      const union = new Set([...b,...s]).size;
+      const jaccard = union ? intersection / union : 0;
+      const subset = b.every(t => sSet.has(t));
+      const firstLast = sSet.has(b[0]) && sSet.has(b[b.length-1]);
+      const exact = normalizeText(bdName) === normalizeText(sapName);
+      return (exact ? 4 : 0) + (subset ? 2 : 0) + (firstLast ? .5 : 0) + jaccard;
+    }
+
+    function proposeMappings(bdRecords, sapRecords) {
+      const bdNames = uniqueSorted(bdRecords.map(r=>r.normName));
+      const sapNames = uniqueSorted(sapRecords.map(r=>r.normName));
+      const sapDisplay = {};
+      sapRecords.forEach(r => { if (!sapDisplay[r.normName]) sapDisplay[r.normName] = r.name; });
+      const bdDisplay = {};
+      bdRecords.forEach(r => { if (!bdDisplay[r.normName]) bdDisplay[r.normName] = r.name; });
+      const mappings = {};
+      const meta = {};
+      bdNames.forEach(bd => {
+        const ranked = sapNames.map(sap => ({ sap, score:nameScore(bd,sap) })).sort((a,b)=>b.score-a.score);
+        const best = ranked[0] || {sap:'',score:0};
+        const second = ranked[1] || {score:0};
+        let selected = '';
+        let level = 'low';
+        if (best.score >= 2.5 && best.score - second.score > .12) {
+          selected = best.sap;
+          level = best.score >= 3.1 ? 'high' : 'medium';
+        } else if (best.score >= 1.15 && best.score - second.score > .25) {
+          selected = best.sap;
+          level = 'medium';
+        }
+        if (state.mappings[bd] && sapNames.includes(state.mappings[bd])) selected = state.mappings[bd];
+        mappings[bd] = selected;
+        meta[bd] = { score:best.score, level, bdDisplay:bdDisplay[bd] || bd, sapDisplay:sapDisplay[selected] || selected, candidates:ranked.slice(0,5) };
+      });
+      return { mappings, meta, sapNames, sapDisplay, bdDisplay };
+    }
+
+    function renderMappings(mappingData) {
+      state.mappings = mappingData.mappings;
+      state.mappingMeta = mappingData.meta;
+      const options = mappingData.sapNames.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(mappingData.sapDisplay[n] || n)}</option>`).join('');
+      $('mappingBody').innerHTML = Object.keys(mappingData.mappings).map(bd => {
+        const selected = mappingData.mappings[bd];
+        const info = mappingData.meta[bd];
+        const levelLabel = info.level === 'high' ? 'Alta' : info.level === 'medium' ? 'Media' : 'Revisar';
+        return `<tr>
+          <td><strong>${escapeHtml(info.bdDisplay)}</strong></td>
+          <td><select class="mapping-select" data-bd="${escapeHtml(bd)}"><option value="">Sin asociación</option>${options}</select></td>
+          <td><span class="confidence ${info.level}">${levelLabel}</span></td>
+        </tr>`;
+      }).join('');
+      document.querySelectorAll('.mapping-select').forEach(select => { select.value = state.mappings[select.dataset.bd] || ''; });
+      const lowCount = Object.values(mappingData.meta).filter(x=>x.level==='low').length;
+      if (lowCount) $('mappingDetails').open = true;
+    }
+
+    function getSelectedMappings() {
+      document.querySelectorAll('.mapping-select').forEach(select => { state.mappings[select.dataset.bd] = select.value; });
+      return state.mappings;
+    }
+
+    function makeKey(name, date, rate) { return `${name}|||${date}|||${rate}`; }
+
+    function compareData(year, month, tolerance, mappings) {
+      const approvedOnly = $('approvedOnly').checked;
+      const bdPeriodAll = state.bd.records.filter(r => r.year===year && r.month===month);
+      const bdPeriod = bdPeriodAll.filter(r => !approvedOnly || isApprovedStatus(r.normStatus));
+      const sapPeriod = state.sap.records.filter(r => r.year===year && r.month===month);
+
+      const bdDisplay = {}, sapDisplay = {};
+      bdPeriod.forEach(r => { if (!bdDisplay[r.normName]) bdDisplay[r.normName]=r.name; });
+      sapPeriod.forEach(r => { if (!sapDisplay[r.normName]) sapDisplay[r.normName]=r.name; });
+
+      const bdAgg = new Map(), sapAgg = new Map();
+      bdPeriod.forEach(r => {
+        const mapped = mappings[r.normName] || '';
+        const canonical = mapped || `BD::${r.normName}`;
+        const key = makeKey(canonical,r.date,r.rate || 'SIN RECARGO');
+        const current = bdAgg.get(key) || { hours:0, records:0, canonical, date:r.date, rate:r.rate || 'SIN RECARGO', bdNames:new Set(), sapNames:new Set() };
+        current.hours += Number(r.hours || 0); current.records++; current.bdNames.add(r.normName);
+        bdAgg.set(key,current);
+      });
+      sapPeriod.forEach(r => {
+        const canonical = r.normName;
+        const key = makeKey(canonical,r.date,r.rate || 'SIN RECARGO');
+        const current = sapAgg.get(key) || { hours:0, records:0, canonical, date:r.date, rate:r.rate || 'SIN RECARGO', bdNames:new Set(), sapNames:new Set() };
+        current.hours += Number(r.hours || 0); current.records++; current.sapNames.add(r.normName);
+        sapAgg.set(key,current);
+      });
+
+      const keys = [...new Set([...bdAgg.keys(),...sapAgg.keys()])].sort();
+      const detail = keys.map(key => {
+        const b = bdAgg.get(key), s = sapAgg.get(key);
+        const source = b || s;
+        const bdHours = Number((b?.hours || 0).toFixed(4));
+        const sapHours = Number((s?.hours || 0).toFixed(4));
+        const diff = Number((sapHours-bdHours).toFixed(4));
+        const unmatched = source.canonical.startsWith('BD::');
+        let status;
+        if (unmatched) status='Sin asociación';
+        else if (Math.abs(diff) <= tolerance) status='Conforme';
+        else if (bdHours===0) status='Solo SAP';
+        else if (sapHours===0) status='Solo formulario';
+        else status='Diferencia';
+        const canonical = source.canonical;
+        const bdNormNames = [...(b?.bdNames || [])];
+        const sapNormNames = [...(s?.sapNames || [])];
+        const bdNames = bdNormNames.map(n=>bdDisplay[n] || n);
+        let sapName = sapDisplay[canonical] || sapNormNames.map(n=>sapDisplay[n]||n)[0] || '';
+        const bdName = bdNames.join(' / ');
+        const worker = sapName || bdName || canonical.replace('BD::','');
+        let observation;
+        if (status==='Conforme') observation='Las horas coinciden dentro de la tolerancia definida.';
+        else if (status==='Solo formulario') observation=`Revisar: ${formatHours(bdHours)} h aprobadas en BD.HE no figuran en SAP.`;
+        else if (status==='Solo SAP') observation=`Revisar: ${formatHours(sapHours)} h figuran en SAP sin respaldo aprobado en BD.HE.`;
+        else if (status==='Sin asociación') observation='No fue posible asociar automáticamente este trabajador con un nombre de SAP.';
+        else observation=`Revisar diferencia de ${signedHours(diff)} h entre SAP y BD.HE.`;
+        return { key, canonical, date:source.date, rate:source.rate, worker, bdName, sapName, bdHours, sapHours, diff, status, observation, bdRecords:b?.records||0, sapRecords:s?.records||0 };
+      });
+
+      const summaryMap = new Map();
+      detail.forEach(row => {
+        const key=row.canonical;
+        const current=summaryMap.get(key) || { canonical:key, worker:row.worker, bdNames:new Set(), sapNames:new Set(), bdHours:0, sapHours:0, issues:[], all:[] };
+        if (row.bdName) row.bdName.split(' / ').forEach(n=>current.bdNames.add(n));
+        if (row.sapName) current.sapNames.add(row.sapName);
+        current.bdHours += row.bdHours; current.sapHours += row.sapHours; current.all.push(row);
+        if (row.status!=='Conforme') current.issues.push(row);
+        summaryMap.set(key,current);
+      });
+
+      const summary=[...summaryMap.values()].map(p => {
+        p.bdHours=Number(p.bdHours.toFixed(4)); p.sapHours=Number(p.sapHours.toFixed(4)); p.diff=Number((p.sapHours-p.bdHours).toFixed(4));
+        p.bdName=[...p.bdNames].join(' / '); p.sapName=[...p.sapNames].join(' / ');
+        p.status=p.issues.length ? 'Revisar' : 'Conforme';
+        if (!p.issues.length) p.observation='Horas aprobadas coinciden en BD.HE y SAP.';
+        else {
+          const snippets=p.issues.slice(0,3).map(x=>`${formatDisplayDate(x.date)} ${x.rate}: BD.HE ${formatHours(x.bdHours)} h / SAP ${formatHours(x.sapHours)} h`);
+          p.observation=`Revisar ${snippets.join('; ')}${p.issues.length>3 ? `; y ${p.issues.length-3} incidencia(s) adicional(es)` : ''}.`;
+        }
+        return p;
+      }).sort((a,b)=> a.status.localeCompare(b.status,'es') || a.worker.localeCompare(b.worker,'es'));
+
+      const rates=['50%','75%','100%'];
+      const rateSummary={};
+      rates.forEach(rate => {
+        rateSummary[rate]={
+          bd:bdPeriod.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0),
+          sap:sapPeriod.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0)
+        };
+      });
+
+      const formStates={};
+      bdPeriodAll.forEach(r => { const k=r.normStatus || 'SIN ESTADO'; formStates[k]=(formStates[k]||0)+1; });
+
+      return {
+        year,month,tolerance,approvedOnly,bdPeriod,bdPeriodAll,sapPeriod,detail,summary,rateSummary,formStates,
+        totalBd:bdPeriod.reduce((a,r)=>a+r.hours,0), totalSap:sapPeriod.reduce((a,r)=>a+r.hours,0)
+      };
+    }
+
+    function formatDisplayDate(iso) {
+      if (!iso) return '';
+      const [y,m,d]=iso.split('-'); return `${d}-${m}-${y}`;
+    }
+
+    function runComparison(rebuildMappings=true) {
+      clearMessage();
+      if (!state.bd || !state.sap) return showMessage('Debes cargar ambos archivos antes de comparar.','error');
+      const year=Number($('yearSelect').value), month=Number($('monthSelect').value), tolerance=Number($('tolerance').value || 0);
+      if (!year || !month) return showMessage('Selecciona un año y un mes válidos.','error');
+      showLoading('Comparando BD.HE y SAP...');
+      setTimeout(() => {
+        try {
+          const bdCandidate=state.bd.records.filter(r=>r.year===year && r.month===month && (!$('approvedOnly').checked || isApprovedStatus(r.normStatus)));
+          const sapCandidate=state.sap.records.filter(r=>r.year===year && r.month===month);
+          if (!bdCandidate.length && !sapCandidate.length) throw new Error('No se encontraron registros para el período seleccionado.');
+          if (rebuildMappings) {
+            const mappingData=proposeMappings(bdCandidate,sapCandidate);
+            renderMappings(mappingData);
+          } else getSelectedMappings();
+          state.results=compareData(year,month,tolerance,state.mappings);
+          state.summaryPage=1; state.detailPage=1;
+          renderAll();
+          $('results').classList.add('show');
+          showMessage(`Comparación completada para ${MONTHS[month-1]} de ${year}. Revisa primero las equivalencias de nombres y luego las incidencias.`, 'success');
+          window.scrollTo({top:$('results').offsetTop-18,behavior:'smooth'});
+        } catch(err) { showMessage(err.message || String(err),'error'); }
+        finally { hideLoading(); }
+      },40);
+    }
+
+    function renderAll() {
+      renderKpis(); renderRates(); renderStates(); renderSummary(); renderDetail(); renderReport();
+    }
+
+    function renderKpis() {
+      const r=state.results;
+      const good=r.summary.filter(x=>x.status==='Conforme').length;
+      const review=r.summary.length-good;
+      $('kpiWorkers').textContent=r.summary.length.toLocaleString('es-CL');
+      $('kpiGood').textContent=good.toLocaleString('es-CL');
+      $('kpiReview').textContent=review.toLocaleString('es-CL');
+      $('kpiBd').textContent=formatHours(r.totalBd);
+      $('kpiSap').textContent=formatHours(r.totalSap);
+      $('kpiDiff').textContent=signedHours(r.totalSap-r.totalBd);
+      $('kpiBdRows').textContent=`${r.bdPeriod.length.toLocaleString('es-CL')} registros considerados`;
+      $('kpiSapRows').textContent=`${r.sapPeriod.length.toLocaleString('es-CL')} registros considerados`;
+    }
+
+    function renderRates() {
+      const r=state.results;
+      $('rateGrid').innerHTML=['50%','75%','100%'].map(rate=>{
+        const x=r.rateSummary[rate], max=Math.max(x.bd,x.sap,1), pct=Math.min(100,Math.abs(x.sap-x.bd)/max*100);
+        return `<div class="rate-card"><div class="rate-head"><span>Horas al ${rate}</span><span>${signedHours(x.sap-x.bd)} h</span></div><div class="rate-values"><div><span>BD.HE</span><strong>${formatHours(x.bd)}</strong></div><div><span>SAP</span><strong>${formatHours(x.sap)}</strong></div></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
+      }).join('');
+    }
+
+    function renderStates() {
+      const states=state.results.formStates;
+      const entries=Object.entries(states).sort((a,b)=>b[1]-a[1]);
+      const total=entries.reduce((a,[,v])=>a+v,0) || 1;
+      $('stateSummary').innerHTML=entries.length ? entries.map(([name,count])=>{
+        const pct=count/total*100;
+        const color=name.startsWith('APROBAD')?'var(--green)':name.includes('RECHAZ')?'var(--red)':'var(--yellow)';
+        return `<div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:12px"><strong>${escapeHtml(name)}</strong><span>${count}</span></div><div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:12px">Sin registros del formulario en el período.</div>';
+    }
+
+    function filteredSummary() {
+      if (!state.results) return [];
+      const q=normalizeText($('summarySearch').value), status=$('summaryStatus').value;
+      return state.results.summary.filter(r => (status==='Todos'||r.status===status) && (!q || normalizeText(`${r.worker} ${r.bdName} ${r.sapName} ${r.observation}`).includes(q)));
+    }
+
+    function renderSummary() {
+      const rows=filteredSummary();
+      const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE_SUMMARY)); state.summaryPage=Math.min(state.summaryPage,pages);
+      const start=(state.summaryPage-1)*PAGE_SIZE_SUMMARY, pageRows=rows.slice(start,start+PAGE_SIZE_SUMMARY);
+      $('summaryBody').innerHTML=pageRows.length ? pageRows.map(r=>`<tr class="${r.status==='Revisar'?'row-issue':''}">
+        <td><strong>${escapeHtml(r.worker)}</strong></td><td>${escapeHtml(r.bdName||'—')}</td><td>${escapeHtml(r.sapName||'—')}</td>
+        <td class="num">${formatHours(r.bdHours)}</td><td class="num">${formatHours(r.sapHours)}</td><td class="num">${signedHours(r.diff)}</td><td class="num">${r.issues.length}</td>
+        <td><span class="status-pill ${statusClass(r.status)}">${r.status}</span></td><td>${escapeHtml(r.observation)}</td></tr>`).join('') : `<tr><td colspan="9" class="empty-row">No hay resultados para los filtros seleccionados.</td></tr>`;
+      $('summaryCount').textContent=`${rows.length} trabajador(es)`;
+      $('summaryPageInfo').textContent=`Página ${state.summaryPage} de ${pages} · ${rows.length} resultado(s)`;
+      $('summaryPrev').disabled=state.summaryPage<=1; $('summaryNext').disabled=state.summaryPage>=pages;
+    }
+
+    function filteredDetail() {
+      if (!state.results) return [];
+      const q=normalizeText($('detailSearch').value), status=$('detailStatus').value;
+      return state.results.detail.filter(r => (status==='Todos'||r.status===status) && (!q || normalizeText(`${r.worker} ${r.date} ${formatDisplayDate(r.date)} ${r.rate} ${r.observation}`).includes(q)));
+    }
+
+    function renderDetail() {
+      const rows=filteredDetail();
+      const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE_DETAIL)); state.detailPage=Math.min(state.detailPage,pages);
+      const start=(state.detailPage-1)*PAGE_SIZE_DETAIL, pageRows=rows.slice(start,start+PAGE_SIZE_DETAIL);
+      $('detailBody').innerHTML=pageRows.length ? pageRows.map(r=>`<tr class="${r.status==='Sin asociación'?'row-danger':r.status!=='Conforme'?'row-issue':''}">
+        <td>${formatDisplayDate(r.date)}</td><td><strong>${escapeHtml(r.worker)}</strong></td><td>${escapeHtml(r.rate)}</td>
+        <td class="num">${formatHours(r.bdHours)}</td><td class="num">${formatHours(r.sapHours)}</td><td class="num">${signedHours(r.diff)}</td>
+        <td><span class="status-pill ${statusClass(r.status)}">${r.status}</span></td><td>${escapeHtml(r.observation)}</td></tr>`).join('') : `<tr><td colspan="8" class="empty-row">No hay resultados para los filtros seleccionados.</td></tr>`;
+      $('detailCount').textContent=`${rows.length} combinación(es) trabajador-fecha-recargo`;
+      $('detailPageInfo').textContent=`Página ${state.detailPage} de ${pages} · ${rows.length} resultado(s)`;
+      $('detailPrev').disabled=state.detailPage<=1; $('detailNext').disabled=state.detailPage>=pages;
+    }
+
+    function reportHtml() {
+      const r=state.results, good=r.summary.filter(x=>x.status==='Conforme'), review=r.summary.filter(x=>x.status==='Revisar');
+      const period=`${MONTHS[r.month-1]} de ${r.year}`;
+      const excluded=r.bdPeriodAll.length-r.bdPeriod.length;
+      return `<h4>Informe de conciliación de horas extras — ${period}</h4>
+        <div class="report-meta">Generado el ${new Date().toLocaleString('es-CL')} · Tolerancia: ${formatHours(r.tolerance)} h · ${r.approvedOnly?'Solo registros aprobados de BD.HE':'Todos los estados de BD.HE'}</div>
+        <p>Se analizaron <strong>${r.summary.length} trabajadores</strong>, comparando cada registro por trabajador, fecha y porcentaje de recargo. El formulario contiene <strong>${formatHours(r.totalBd)} horas</strong> consideradas y SAP contiene <strong>${formatHours(r.totalSap)} horas extras</strong>, con una diferencia neta SAP − BD.HE de <strong>${signedHours(r.totalSap-r.totalBd)} horas</strong>.${excluded>0?` Se excluyeron ${excluded} registro(s) del formulario por no estar aprobados.`:''}</p>
+        <p><strong>${good.length} trabajador(es)</strong> presentan concordancia completa y <strong>${review.length} trabajador(es)</strong> requieren revisión.</p>
+        <h5>Trabajadores con horas conformes</h5>
+        ${good.length?`<ul>${good.map(x=>`<li><strong>${escapeHtml(x.worker)}</strong>: ${formatHours(x.bdHours)} h aprobadas en BD.HE y ${formatHours(x.sapHours)} h en SAP. Horas conformes.</li>`).join('')}</ul>`:'<p>No se identificaron trabajadores completamente conformes.</p>'}
+        <h5>Trabajadores que requieren revisión</h5>
+        ${review.length?`<ul>${review.map(x=>`<li><strong>${escapeHtml(x.worker)}</strong>: ${escapeHtml(x.observation)} Total BD.HE ${formatHours(x.bdHours)} h; total SAP ${formatHours(x.sapHours)} h; diferencia ${signedHours(x.diff)} h.</li>`).join('')}</ul>`:'<p>No se identificaron diferencias para revisar.</p>'}
+        <h5>Conclusión</h5>
+        <p>${review.length ? `Las personas indicadas en la sección de revisión presentan al menos una inconcordancia de fecha, porcentaje o cantidad de horas entre el formulario y SAP. Se recomienda validar el respaldo aprobado y corregir el sistema que corresponda antes del cierre del período.` : `Las horas aprobadas del formulario coinciden con SAP para todos los trabajadores analizados dentro de la tolerancia configurada.`}</p>`;
+    }
+
+    function reportPlainText() {
+      const tmp=document.createElement('div'); tmp.innerHTML=reportHtml(); return tmp.innerText;
+    }
+    function renderReport() { $('reportBody').innerHTML=reportHtml(); }
+
+    function exportResults() {
+      if (!state.results || typeof XLSX==='undefined') return;
+      const r=state.results;
+      const summaryData=r.summary.map(x=>({
+        'Trabajador':x.worker,'Nombre BD.HE':x.bdName,'Nombre SAP':x.sapName,'Horas BD.HE':Number(x.bdHours.toFixed(2)),'Horas SAP':Number(x.sapHours.toFixed(2)),'Diferencia SAP - BD.HE':Number(x.diff.toFixed(2)),'Incidencias':x.issues.length,'Estado':x.status,'Resultado':x.observation
+      }));
+      const detailData=r.detail.map(x=>({
+        'Fecha':formatDisplayDate(x.date),'Trabajador':x.worker,'Recargo':x.rate,'Horas BD.HE':Number(x.bdHours.toFixed(2)),'Horas SAP':Number(x.sapHours.toFixed(2)),'Diferencia SAP - BD.HE':Number(x.diff.toFixed(2)),'Estado':x.status,'Observación':x.observation
+      }));
+      const mappingData=Object.keys(state.mappings).map(bd=>({
+        'Nombre normalizado BD.HE':bd,'Nombre asociado SAP':state.mappings[bd]||'Sin asociación','Confianza':state.mappingMeta[bd]?.level||''
+      }));
+      const metaData=[
+        ['Período',`${MONTHS[r.month-1]} ${r.year}`],['Archivo BD.HE',state.bd.filename],['Hoja BD.HE',state.bd.sheet],['Archivo SAP',state.sap.filename],['Hoja SAP',state.sap.sheet],['Tolerancia (horas)',r.tolerance],['Solo aprobadas',r.approvedOnly?'Sí':'No'],['Horas BD.HE',r.totalBd],['Horas SAP',r.totalSap],['Diferencia',r.totalSap-r.totalBd],['Trabajadores conformes',r.summary.filter(x=>x.status==='Conforme').length],['Trabajadores a revisar',r.summary.filter(x=>x.status==='Revisar').length]
+      ];
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summaryData),'Resumen');
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(detailData),'Detalle');
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(mappingData),'Equivalencias');
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(metaData),'Parámetros');
+      const filename=`Conciliacion_HE_${r.year}_${String(r.month).padStart(2,'0')}.xlsx`;
+      XLSX.writeFile(wb,filename);
+    }
+
+    async function loadFile(kind,file) {
+      if (!file) return;
+      showLoading(`Leyendo ${file.name}...`); clearMessage();
+      try {
+        const workbook=await readWorkbook(file);
+        if (kind==='bd') {
+          state.bd=parseBd(workbook,file.name);
+          $('bdDrop').classList.add('loaded');
+          $('bdMeta').textContent=`${file.name} · Hoja ${state.bd.sheet} · ${state.bd.records.length.toLocaleString('es-CL')} registros válidos`;
+        } else {
+          state.sap=parseSap(workbook,file.name);
+          $('sapDrop').classList.add('loaded');
+          $('sapMeta').textContent=`${file.name} · Hoja ${state.sap.sheet} · ${state.sap.records.length.toLocaleString('es-CL')} registros de horas extra`;
+        }
+        if (state.bd && state.sap) {
+          refreshPeriodOptions(); $('compareBtn').disabled=false;
+          showMessage('Ambos archivos están listos. Selecciona el período y presiona “Comparar archivos”.','info');
+        } else showMessage('Archivo cargado correctamente. Falta cargar el segundo archivo.','success');
+      } catch(err) {
+        showMessage(`${file.name}: ${err.message || err}`,'error');
+        if (kind==='bd') { state.bd=null; $('bdDrop').classList.remove('loaded'); $('bdMeta').textContent='No se pudo procesar el archivo'; }
+        else { state.sap=null; $('sapDrop').classList.remove('loaded'); $('sapMeta').textContent='No se pudo procesar el archivo'; }
+        $('compareBtn').disabled=!(state.bd&&state.sap);
+      } finally { hideLoading(); }
+    }
+
+    function setupDrop(boxId,inputId,kind) {
+      const box=$(boxId), input=$(inputId);
+      input.addEventListener('change',e=>loadFile(kind,e.target.files[0]));
+      ['dragenter','dragover'].forEach(evt=>box.addEventListener(evt,e=>{e.preventDefault();box.classList.add('dragover');}));
+      ['dragleave','drop'].forEach(evt=>box.addEventListener(evt,e=>{e.preventDefault();box.classList.remove('dragover');}));
+      box.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) loadFile(kind,f); });
+    }
+
+    setupDrop('bdDrop','bdFile','bd'); setupDrop('sapDrop','sapFile','sap');
+    $('compareBtn').addEventListener('click',()=>runComparison(true));
+    $('applyMappings').addEventListener('click',()=>runComparison(false));
+    $('yearSelect').addEventListener('change',()=>{
+      if (!state.bd||!state.sap) return;
+      const year=Number($('yearSelect').value);
+      const months=uniqueSorted([...state.bd.records.filter(r=>r.year===year).map(r=>r.month),...state.sap.records.filter(r=>r.year===year).map(r=>r.month)]).sort((a,b)=>a-b);
+      $('monthSelect').value=String(months.at(-1)||'');
+    });
+    $('summarySearch').addEventListener('input',()=>{state.summaryPage=1;renderSummary();});
+    $('summaryStatus').addEventListener('change',()=>{state.summaryPage=1;renderSummary();});
+    $('detailSearch').addEventListener('input',()=>{state.detailPage=1;renderDetail();});
+    $('detailStatus').addEventListener('change',()=>{state.detailPage=1;renderDetail();});
+    $('summaryPrev').addEventListener('click',()=>{state.summaryPage--;renderSummary();});
+    $('summaryNext').addEventListener('click',()=>{state.summaryPage++;renderSummary();});
+    $('detailPrev').addEventListener('click',()=>{state.detailPage--;renderDetail();});
+    $('detailNext').addEventListener('click',()=>{state.detailPage++;renderDetail();});
+    $('copyReport').addEventListener('click',async()=>{
+      try { await navigator.clipboard.writeText(reportPlainText()); showMessage('Informe copiado al portapapeles.','success'); }
+      catch { showMessage('No fue posible copiar automáticamente. Selecciona el texto del informe y cópialo manualmente.','error'); }
+    });
+    $('exportExcel').addEventListener('click',exportResults);
+    $('printReport').addEventListener('click',()=>window.print());
+
+    setTimeout(()=>{
+      if (typeof XLSX==='undefined') showMessage('La librería de Excel no se cargó. Esta página requiere conexión a internet al abrirse para habilitar la lectura de archivos XLSX.','error');
+    },3500);
+  })();
+  </script>
+</body>
+</html>
