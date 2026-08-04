@@ -40,8 +40,9 @@
     footer{text-align:center;padding:25px 0 0;color:#778795;font-size:10px}
     .loading{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,31,54,.43);backdrop-filter:blur(3px);z-index:100}.loading.show{display:flex}.loader-box{min-width:300px;background:white;border-radius:15px;padding:23px;box-shadow:var(--shadow);text-align:center}.spinner{width:38px;height:38px;margin:0 auto 12px;border:4px solid #dce8ef;border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.loader-box strong{color:var(--navy);font-size:13px}.loader-box p{margin:6px 0 0;color:var(--muted);font-size:10px}
     .modal{position:fixed;inset:0;background:rgba(3,29,51,.55);display:none;align-items:center;justify-content:center;padding:24px;z-index:90}.modal.show{display:flex}.modal-card{width:min(1180px,100%);max-height:92vh;background:white;border-radius:18px;box-shadow:0 20px 70px rgba(0,0,0,.22);overflow:hidden;display:flex;flex-direction:column}.modal-head{padding:18px 21px;display:flex;justify-content:space-between;align-items:flex-start;gap:15px;border-bottom:1px solid var(--line)}.modal-head h2{margin:0;color:var(--navy);font-size:20px}.modal-head p{margin:5px 0 0;color:var(--muted);font-size:11px}.modal-close{width:36px;height:36px;border:0;border-radius:10px;background:#eef3f7;color:var(--navy);font-size:20px}.modal-body{padding:18px 21px;overflow:auto}.modal-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.mini-kpi{padding:12px;border:1px solid var(--line);border-radius:11px;background:#f9fbfd}.mini-kpi span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:800}.mini-kpi strong{display:block;margin-top:5px;color:var(--navy);font-size:19px}.modal-actions{padding:13px 21px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+    .bd-hours-trigger{appearance:none;border:1px solid transparent;background:transparent;color:var(--navy);padding:5px 7px;border-radius:8px;min-width:68px;text-align:right;line-height:1.05;transition:.16s}.bd-hours-trigger:hover,.bd-hours-trigger:focus-visible{background:#eaf4fb;border-color:#b9d8e9;color:var(--blue);outline:none}.bd-hours-trigger .hours-main{display:block;font-weight:900;font-variant-numeric:tabular-nums;text-decoration:underline;text-decoration-style:dotted;text-decoration-color:#74a9c8;text-underline-offset:3px}.bd-hours-trigger .hours-hint{display:block;margin-top:4px;font-size:7.5px;font-weight:850;letter-spacing:.045em;text-transform:uppercase;color:#4f7893}.bd-hours-empty{color:var(--muted);font-variant-numeric:tabular-nums}.time-modal{z-index:110}.time-modal .modal-card{width:min(860px,100%);max-height:88vh}.time-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.time-help{margin:0 0 14px;padding:11px 13px;border-left:4px solid var(--blue);background:#f1f7fb;color:#456276;font-size:11px;line-height:1.45}.time-table{min-width:760px}.time-value{font-weight:900;color:var(--navy);font-variant-numeric:tabular-nums}.time-source{font-size:9px;color:var(--muted);line-height:1.35}.time-comment{white-space:normal;min-width:180px}.time-missing{color:var(--red);font-weight:800}.time-record{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eaf4fb;color:var(--navy);font-size:10px;font-weight:900}
     @media(max-width:1180px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.controls{grid-template-columns:repeat(3,1fr)}.controls .btn{width:100%}.split{grid-template-columns:1fr}}
-    @media(max-width:820px){.shell{padding:14px}.hero{align-items:flex-start;flex-direction:column;padding:20px}.divider{display:none}.upload-grid{grid-template-columns:1fr}.dropzone{align-items:flex-start;flex-direction:column}.controls{grid-template-columns:1fr 1fr}.kpi-grid{grid-template-columns:1fr 1fr}.rate-grid,.method-grid{grid-template-columns:1fr}.table-toolbar,.report-head{align-items:stretch;flex-direction:column}.modal-kpis{grid-template-columns:1fr 1fr}.brandmark{min-width:120px}}
+    @media(max-width:820px){.shell{padding:14px}.hero{align-items:flex-start;flex-direction:column;padding:20px}.divider{display:none}.upload-grid{grid-template-columns:1fr}.dropzone{align-items:flex-start;flex-direction:column}.controls{grid-template-columns:1fr 1fr}.kpi-grid{grid-template-columns:1fr 1fr}.rate-grid,.method-grid{grid-template-columns:1fr}.table-toolbar,.report-head{align-items:stretch;flex-direction:column}.modal-kpis,.time-summary{grid-template-columns:1fr 1fr}.brandmark{min-width:120px}}
     @media print{body{background:#fff}.topline,.hero,.upload-card,.kpi-grid,.split,.mapping,.table-card,.method,footer,.report-head .toolbar-actions{display:none!important}.shell{max-width:none;padding:0}.report-card{border:0;box-shadow:none;margin:0;padding:0}.report-preview{border:0;max-height:none;overflow:visible;padding:0}}
 
     /* Acciones del informe: la vista previa ya no ocupa espacio permanente. */
@@ -128,13 +129,35 @@
 
 <div class="modal" id="workerModal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><div><h2 id="modalWorker">Detalle del trabajador</h2><p id="modalNames"></p></div><button class="modal-close" id="modalClose" aria-label="Cerrar">×</button></div><div class="modal-body"><div class="modal-kpis"><div class="mini-kpi"><span>Horas BD.HE</span><strong id="modalBd">0,00</strong></div><div class="mini-kpi"><span>Horas SAP</span><strong id="modalSap">0,00</strong></div><div class="mini-kpi"><span>Diferencia</span><strong id="modalDiff">0,00</strong></div><div class="mini-kpi"><span>Estado</span><strong id="modalStatus" style="font-size:15px">—</strong></div></div><div class="table-scroll" style="max-height:52vh;border:1px solid var(--line);border-radius:11px"><table style="min-width:850px"><thead><tr><th>Fecha</th><th>Recargo</th><th class="num">Formulario BD.HE</th><th class="num">SAP</th><th class="num">Diferencia</th><th>Estado</th><th>Observación</th></tr></thead><tbody id="modalBody"></tbody></table></div></div><div class="modal-actions"><button class="btn btn-secondary" id="workerPdf">Descargar detalle PDF</button><button class="btn btn-blue" id="modalClose2">Cerrar</button></div></div></div>
 
+<div class="modal time-modal" id="bdTimeModal" role="dialog" aria-modal="true" aria-labelledby="bdTimeTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div><h2 id="bdTimeTitle">Horario registrado en BD.HE</h2><p id="bdTimeSubtitle">Detalle de hora de inicio y hora de término informadas en el formulario.</p></div>
+      <button class="modal-close" id="bdTimeClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="time-summary">
+        <div class="mini-kpi"><span>Trabajador</span><strong id="bdTimeWorker" style="font-size:14px">—</strong></div>
+        <div class="mini-kpi"><span>Fecha</span><strong id="bdTimeDate" style="font-size:16px">—</strong></div>
+        <div class="mini-kpi"><span>Recargo</span><strong id="bdTimeRate" style="font-size:16px">—</strong></div>
+        <div class="mini-kpi"><span>Total BD.HE</span><strong id="bdTimeTotal" style="font-size:16px">0,00 h</strong></div>
+      </div>
+      <p class="time-help">Este detalle proviene directamente de las columnas <strong>Hr inicio</strong> y <strong>Hr término</strong> del formulario BD.HE. Cuando existen varios registros para la misma fecha y recargo, se muestran por separado.</p>
+      <div class="table-scroll" style="max-height:48vh;border:1px solid var(--line);border-radius:11px">
+        <table class="time-table"><thead><tr><th>Registro</th><th>Hora de inicio</th><th>Hora de término</th><th class="num">Horas registradas</th><th>Archivo / hoja</th><th>Comentario</th></tr></thead><tbody id="bdTimeBody"></tbody></table>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-blue" id="bdTimeClose2">Cerrar</button></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (() => {
 'use strict';
 const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const $=id=>document.getElementById(id);
-const state={bd:null,sap:null,results:null,mappings:{},mappingMeta:{},summaryPage:1,activeWorker:null,bdLoadErrors:[]};
+const state={bd:null,sap:null,results:null,mappings:{},mappingMeta:{},summaryPage:1,activeWorker:null,activeBdDetail:null,bdLoadErrors:[]};
 const SUMMARY_PAGE=30;
 
 function normalizeText(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u00a0/g,' ').toUpperCase().replace(/[^A-Z0-9% ]+/g,' ').replace(/\s+/g,' ').trim()}
@@ -143,6 +166,30 @@ function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':
 function formatHours(value){return Number(value||0).toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function signedHours(value){const n=Number(value||0);return (n>0?'+':'')+formatHours(n)}
 function formatDate(iso){if(!iso)return '—';const [y,m,d]=iso.split('-');return `${d}-${m}-${y}`}
+function formatClockTime(value){
+  if(value==null||value==='')return 'No informado';
+  if(value instanceof Date&&!isNaN(value))return `${String(value.getHours()).padStart(2,'0')}:${String(value.getMinutes()).padStart(2,'0')}`;
+  if(typeof value==='number'&&Number.isFinite(value)){
+    let decimalHours;
+    if(value>=0&&value<1)decimalHours=value*24;
+    else if(value>=0&&value<24)decimalHours=value;
+    else decimalHours=((value%1)+1)%1*24;
+    let totalMinutes=Math.round(decimalHours*60)%(24*60);
+    const hh=Math.floor(totalMinutes/60),mm=totalMinutes%60;
+    return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  }
+  const original=String(value).trim();
+  if(!original)return 'No informado';
+  const numeric=Number(original.replace(',','.'));
+  if(Number.isFinite(numeric))return formatClockTime(numeric);
+  const compact=original.toLowerCase().replace(/\s+/g,'').replace(/\./g,'');
+  let match=compact.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(am|pm)$/);
+  if(match){let hour=Number(match[1])%12;if(match[4]==='pm')hour+=12;return `${String(hour).padStart(2,'0')}:${String(Number(match[2])).padStart(2,'0')}`}
+  match=original.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+  if(match)return `${String(Number(match[1])%24).padStart(2,'0')}:${String(Number(match[2])).padStart(2,'0')}`;
+  return original;
+}
+function bdEntrySource(entry){const file=entry.file||'';const sheet=entry.sheet||'';const row=entry.row?`fila ${entry.row}`:'';return [file,sheet,row].filter(Boolean).join(' · ')||'BD.HE'}
 function isApprovedStatus(value){return normalizeText(value).startsWith('APROBAD')}
 function showMessage(text,type='info'){const b=$('messageBox');b.textContent=text;b.className=`message show ${type}`}
 function clearMessage(){const b=$('messageBox');b.textContent='';b.className='message'}
@@ -193,7 +240,7 @@ function sheetCandidates(workbook,type){const groups=type==='bd'?
   const threshold=type==='bd'?5:3;return workbook.sheets.map(s=>({...s,header:findHeaderRow(s.rows,groups)})).filter(s=>s.header.index>=0&&s.header.score>=threshold)}
 function parseBd(workbook,filename){const candidates=sheetCandidates(workbook,'bd');if(!candidates.length)throw new Error('No se reconoció ninguna hoja válida de BD.HE.');const records=[],statusCounts={},statusByPeriod={},sheetStats=[],qualityCounts={},seen=new Set();let potentialDuplicates=0,invalidDates=0,zeroHours=0;
   for(const sheet of candidates){const map=buildMap(sheet.rows[sheet.header.index]);const col={first:findColumn(map,['Nombre','Nombres'],false),last:findColumn(map,['Apellidos','Apellido'],false),full:findColumn(map,['Nombre completo','Trabajador'],false),rut:findColumn(map,['RUT'],false),date:findColumn(map,['Fecha inicio','Fecha']),hours:findColumn(map,['Horas trabajadas','Total HH','Total horas']),rate:findColumn(map,['% hrs extras','Hrs extras','Recargo','Porcentaje']),status:findColumn(map,['Estado','Estado aprobación']),month:findColumn(map,['Mes'],false),year:findColumn(map,['Año','Ano'],false),start:findColumn(map,['Hr inicio','Hora inicio'],false),end:findColumn(map,['Hr término','Hr termino','Hora término','Hora termino'],false),comments:findColumn(map,['Comentarios','Observación','Observacion'],false)};let valid=0;
-    for(let i=sheet.header.index+1;i<sheet.rows.length;i++){const row=sheet.rows[i]||[];const full=col.full!=null?row[col.full]:'';const name=String(full||`${col.first!=null?row[col.first]||'':''} ${col.last!=null?row[col.last]||'':''}`).replace(/\s+/g,' ').trim();if(!name)continue;const rawDate=row[col.date];const rawParts=rawDateParts(rawDate);const periodMonth=Number(col.month!=null?row[col.month]:rawParts?.m),periodYear=Number(col.year!=null?row[col.year]:rawParts?.y);if(!periodMonth||!periodYear)continue;const corrected=correctBdDate(rawDate,periodYear,periodMonth);qualityCounts[corrected.quality]=(qualityCounts[corrected.quality]||0)+1;if(!corrected.iso){invalidDates++;continue}const status=String(row[col.status]??'').trim(),normStatus=normalizeText(status),statusKey=normStatus||'SIN ESTADO',periodKey=`${periodYear}-${String(periodMonth).padStart(2,'0')}`;statusCounts[statusKey]=(statusCounts[statusKey]||0)+1;statusByPeriod[periodKey]??={};statusByPeriod[periodKey][statusKey]=(statusByPeriod[periodKey][statusKey]||0)+1;const h=parseHours(row[col.hours]);if(Math.abs(h)<1e-9){zeroHours++;continue}const rate=rateFromBd(row[col.rate]);const rut=col.rut!=null?String(row[col.rut]??'').trim():'';const start=col.start!=null?String(row[col.start]??'').trim():'';const end=col.end!=null?String(row[col.end]??'').trim():'';const comments=col.comments!=null?String(row[col.comments]??'').trim():'';const dedupe=[normalizeText(name),rut,corrected.iso,rate,h.toFixed(6),start,end,normStatus,normalizeText(comments)].join('|');if(seen.has(dedupe))potentialDuplicates++;else seen.add(dedupe);records.push({sourceSheet:sheet.name,sourceRow:i+1,name,normName:normalizeText(name),rut,date:corrected.iso,year:periodYear,month:periodMonth,hours:h,rate,status,normStatus,start,end,comments,dateQuality:corrected.quality});valid++}
+    for(let i=sheet.header.index+1;i<sheet.rows.length;i++){const row=sheet.rows[i]||[];const full=col.full!=null?row[col.full]:'';const name=String(full||`${col.first!=null?row[col.first]||'':''} ${col.last!=null?row[col.last]||'':''}`).replace(/\s+/g,' ').trim();if(!name)continue;const rawDate=row[col.date];const rawParts=rawDateParts(rawDate);const periodMonth=Number(col.month!=null?row[col.month]:rawParts?.m),periodYear=Number(col.year!=null?row[col.year]:rawParts?.y);if(!periodMonth||!periodYear)continue;const corrected=correctBdDate(rawDate,periodYear,periodMonth);qualityCounts[corrected.quality]=(qualityCounts[corrected.quality]||0)+1;if(!corrected.iso){invalidDates++;continue}const status=String(row[col.status]??'').trim(),normStatus=normalizeText(status),statusKey=normStatus||'SIN ESTADO',periodKey=`${periodYear}-${String(periodMonth).padStart(2,'0')}`;statusCounts[statusKey]=(statusCounts[statusKey]||0)+1;statusByPeriod[periodKey]??={};statusByPeriod[periodKey][statusKey]=(statusByPeriod[periodKey][statusKey]||0)+1;const h=parseHours(row[col.hours]);if(Math.abs(h)<1e-9){zeroHours++;continue}const rate=rateFromBd(row[col.rate]);const rut=col.rut!=null?String(row[col.rut]??'').trim():'';const startRaw=col.start!=null?row[col.start]:'';const endRaw=col.end!=null?row[col.end]:'';const start=formatClockTime(startRaw);const end=formatClockTime(endRaw);const comments=col.comments!=null?String(row[col.comments]??'').trim():'';const dedupe=[normalizeText(name),rut,corrected.iso,rate,h.toFixed(6),start,end,normStatus,normalizeText(comments)].join('|');if(seen.has(dedupe))potentialDuplicates++;else seen.add(dedupe);records.push({sourceSheet:sheet.name,sourceRow:i+1,name,normName:normalizeText(name),rut,date:corrected.iso,year:periodYear,month:periodMonth,hours:h,rate,status,normStatus,start,end,comments,dateQuality:corrected.quality});valid++}
     sheetStats.push({name:sheet.name,headerRow:sheet.header.index+1,records:valid})}
   return {filename,records,sheets:sheetStats,statusCounts,statusByPeriod,qualityCounts,potentialDuplicates,invalidDates,zeroHours};
 }
@@ -231,9 +278,9 @@ function selectedMappings(){document.querySelectorAll('.mapping-select').forEach
 function keyOf(name,date,rate){return `${name}|||${date}|||${rate}`}
 function statusClass(s){return s==='Conforme'?'st-good':s==='Solo formulario'?'st-form':s==='Solo SAP'?'st-sap':s==='Sin asociación'?'st-unmatched':'st-review'}
 function compareData(year,month,tolerance,mappings){const approvedOnly=$('approvedOnly').checked,bdAll=state.bd.records.filter(r=>r.year===year&&r.month===month),bd=bdAll.filter(r=>!approvedOnly||isApprovedStatus(r.normStatus)),sap=state.sap.records.filter(r=>r.year===year&&r.month===month);const bdDisp={},sapDisp={};bd.forEach(r=>bdDisp[r.normName]??=r.name);sap.forEach(r=>sapDisp[r.normName]??=r.name);const ba=new Map(),sa=new Map();
-  for(const r of bd){const mapped=mappings[r.normName]||'',canonical=mapped||`BD::${r.normName}`,rate=r.rate||'SIN RECARGO',k=keyOf(canonical,r.date,rate),x=ba.get(k)||{hours:0,records:0,canonical,date:r.date,rate,bdNames:new Set(),sources:[]};x.hours+=r.hours;x.records++;x.bdNames.add(r.normName);x.sources.push({sheet:r.sourceSheet,row:r.sourceRow});ba.set(k,x)}
+  for(const r of bd){const mapped=mappings[r.normName]||'',canonical=mapped||`BD::${r.normName}`,rate=r.rate||'SIN RECARGO',k=keyOf(canonical,r.date,rate),x=ba.get(k)||{hours:0,records:0,canonical,date:r.date,rate,bdNames:new Set(),sources:[],entries:[]};x.hours+=r.hours;x.records++;x.bdNames.add(r.normName);x.sources.push({file:r.sourceFile||state.bd.filename,sheet:r.sourceSheet,row:r.sourceRow});x.entries.push({file:r.sourceFile||state.bd.filename,sheet:r.sourceSheet,row:r.sourceRow,start:r.start||'No informado',end:r.end||'No informado',hours:r.hours,comments:r.comments||'',status:r.status||''});ba.set(k,x)}
   for(const r of sap){const canonical=r.normName,rate=r.rate||'SIN RECARGO',k=keyOf(canonical,r.date,rate),x=sa.get(k)||{hours:0,records:0,canonical,date:r.date,rate,sapNames:new Set(),sources:[]};x.hours+=r.hours;x.records++;x.sapNames.add(r.normName);x.sources.push({sheet:r.sourceSheet,row:r.sourceRow});sa.set(k,x)}
-  const detail=[...new Set([...ba.keys(),...sa.keys()])].sort().map(k=>{const b=ba.get(k),s=sa.get(k),src=b||s,bdHours=+(b?.hours||0).toFixed(6),sapHours=+(s?.hours||0).toFixed(6),diff=+(sapHours-bdHours).toFixed(6),unmatched=src.canonical.startsWith('BD::');let status;if(unmatched)status='Sin asociación';else if(Math.abs(diff)<=tolerance)status='Conforme';else if(bdHours===0)status='Solo SAP';else if(sapHours===0)status='Solo formulario';else status='Diferencia';const bdName=[...(b?.bdNames||[])].map(n=>bdDisp[n]||n).join(' / '),sapName=sapDisp[src.canonical]||[...(s?.sapNames||[])].map(n=>sapDisp[n]||n)[0]||'',worker=sapName||bdName||src.canonical.replace('BD::','');let observation;if(status==='Conforme')observation=Math.abs(diff)>0?'Coincide dentro de la tolerancia definida.':'Coincidencia exacta.';else if(status==='Solo formulario')observation=`Revisar: ${formatHours(bdHours)} h aprobadas en BD.HE no figuran en SAP.`;else if(status==='Solo SAP')observation=`Revisar: ${formatHours(sapHours)} h figuran en SAP sin respaldo aprobado en BD.HE.`;else if(status==='Sin asociación')observation='No fue posible asociar automáticamente este trabajador con un nombre de SAP.';else observation=`Revisar diferencia de ${signedHours(diff)} h entre SAP y BD.HE.`;return {key:k,canonical:src.canonical,date:src.date,rate:src.rate,worker,bdName,sapName,bdHours,sapHours,diff,status,observation,bdSources:b?.sources||[],sapSources:s?.sources||[]}});
+  const detail=[...new Set([...ba.keys(),...sa.keys()])].sort().map(k=>{const b=ba.get(k),s=sa.get(k),src=b||s,bdHours=+(b?.hours||0).toFixed(6),sapHours=+(s?.hours||0).toFixed(6),diff=+(sapHours-bdHours).toFixed(6),unmatched=src.canonical.startsWith('BD::');let status;if(unmatched)status='Sin asociación';else if(Math.abs(diff)<=tolerance)status='Conforme';else if(bdHours===0)status='Solo SAP';else if(sapHours===0)status='Solo formulario';else status='Diferencia';const bdName=[...(b?.bdNames||[])].map(n=>bdDisp[n]||n).join(' / '),sapName=sapDisp[src.canonical]||[...(s?.sapNames||[])].map(n=>sapDisp[n]||n)[0]||'',worker=sapName||bdName||src.canonical.replace('BD::','');let observation;if(status==='Conforme')observation=Math.abs(diff)>0?'Coincide dentro de la tolerancia definida.':'Coincidencia exacta.';else if(status==='Solo formulario')observation=`Revisar: ${formatHours(bdHours)} h aprobadas en BD.HE no figuran en SAP.`;else if(status==='Solo SAP')observation=`Revisar: ${formatHours(sapHours)} h figuran en SAP sin respaldo aprobado en BD.HE.`;else if(status==='Sin asociación')observation='No fue posible asociar automáticamente este trabajador con un nombre de SAP.';else observation=`Revisar diferencia de ${signedHours(diff)} h entre SAP y BD.HE.`;return {key:k,canonical:src.canonical,date:src.date,rate:src.rate,worker,bdName,sapName,bdHours,sapHours,diff,status,observation,bdSources:b?.sources||[],bdEntries:b?.entries||[],sapSources:s?.sources||[]}});
   const sm=new Map();for(const r of detail){const x=sm.get(r.canonical)||{canonical:r.canonical,worker:r.worker,bdNames:new Set(),sapNames:new Set(),bdHours:0,sapHours:0,issues:[],all:[]};if(r.bdName)r.bdName.split(' / ').forEach(n=>x.bdNames.add(n));if(r.sapName)x.sapNames.add(r.sapName);x.bdHours+=r.bdHours;x.sapHours+=r.sapHours;x.all.push(r);if(r.status!=='Conforme')x.issues.push(r);sm.set(r.canonical,x)}
   const summary=[...sm.values()].map(x=>{x.bdHours=+x.bdHours.toFixed(6);x.sapHours=+x.sapHours.toFixed(6);x.diff=+(x.sapHours-x.bdHours).toFixed(6);x.bdName=[...x.bdNames].join(' / ');x.sapName=[...x.sapNames].join(' / ');x.status=x.issues.length?'Revisar':'Conforme';if(!x.issues.length)x.observation=Math.abs(x.diff)>tolerance?`Coincidencia por línea; diferencia acumulada de ${signedHours(x.diff)} h por redondeos dentro de tolerancia.`:'Las horas coinciden por fecha y recargo.';else{x.observation=`Revisar ${x.issues.slice(0,3).map(d=>`${formatDate(d.date)} ${d.rate}: BD.HE ${formatHours(d.bdHours)} h / SAP ${formatHours(d.sapHours)} h`).join('; ')}${x.issues.length>3?`; y ${x.issues.length-3} incidencia(s) adicional(es)`:''}.`}return x}).sort((a,b)=>a.status.localeCompare(b.status,'es')||a.worker.localeCompare(b.worker,'es'));
   const rateSummary={};for(const rate of ['50%','75%','100%'])rateSummary[rate]={bd:bd.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0),sap:sap.filter(r=>r.rate===rate).reduce((a,r)=>a+r.hours,0)};const periodKey=`${year}-${String(month).padStart(2,'0')}`,formStates={...(state.bd.statusByPeriod?.[periodKey]||{})};return {year,month,tolerance,approvedOnly,bdAll,bd,sap,detail,summary,rateSummary,formStates,totalBd:bd.reduce((a,r)=>a+r.hours,0),totalSap:sap.reduce((a,r)=>a+r.hours,0)};
@@ -286,8 +333,35 @@ function reportHtml(){
     <div class="exec-signatures"><div class="exec-signature">Elaborado por Administración</div><div class="exec-signature">Revisado / autorizado por</div></div>
   </div>`;
 }
-function openWorker(canonical){const x=state.results.summary.find(s=>s.canonical===canonical);if(!x)return;state.activeWorker=x;$('modalWorker').textContent=x.worker;$('modalNames').textContent=`BD.HE: ${x.bdName||'Sin registro'} · SAP: ${x.sapName||'Sin registro'}`;$('modalBd').textContent=formatHours(x.bdHours);$('modalSap').textContent=formatHours(x.sapHours);$('modalDiff').textContent=signedHours(x.diff);$('modalStatus').textContent=x.status;$('modalStatus').style.color=x.status==='Conforme'?'var(--green)':'var(--red)';$('modalBody').innerHTML=x.all.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.rate.localeCompare(b.rate)).map(d=>`<tr class="${d.status!=='Conforme'?'row-review':''}"><td>${formatDate(d.date)}</td><td>${d.rate}</td><td class="num">${formatHours(d.bdHours)} h</td><td class="num">${formatHours(d.sapHours)} h</td><td class="num">${signedHours(d.diff)} h</td><td><span class="status-pill ${statusClass(d.status)}">${d.status}</span></td><td>${escapeHtml(d.observation)}</td></tr>`).join('');$('workerModal').classList.add('show');document.body.style.overflow='hidden'}
-function closeWorker(){$('workerModal').classList.remove('show');document.body.style.overflow=''}
+function bdHoursCell(detail){
+  if(!detail.bdEntries||!detail.bdEntries.length)return `<span class="bd-hours-empty">${formatHours(detail.bdHours)} h</span>`;
+  const recordLabel=detail.bdEntries.length===1?'Ver horario':`Ver ${detail.bdEntries.length} horarios`;
+  return `<button type="button" class="bd-hours-trigger" data-bd-time="${escapeHtml(detail.key)}" title="Ver hora de inicio y hora de término registradas en BD.HE"><span class="hours-main">${formatHours(detail.bdHours)} h</span><span class="hours-hint">${recordLabel}</span></button>`;
+}
+function openWorker(canonical){
+  const x=state.results.summary.find(s=>s.canonical===canonical);if(!x)return;
+  state.activeWorker=x;
+  $('modalWorker').textContent=x.worker;
+  $('modalNames').textContent=`BD.HE: ${x.bdName||'Sin registro'} · SAP: ${x.sapName||'Sin registro'}`;
+  $('modalBd').textContent=formatHours(x.bdHours);$('modalSap').textContent=formatHours(x.sapHours);$('modalDiff').textContent=signedHours(x.diff);
+  $('modalStatus').textContent=x.status;$('modalStatus').style.color=x.status==='Conforme'?'var(--green)':'var(--red)';
+  $('modalBody').innerHTML=x.all.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.rate.localeCompare(b.rate)).map(d=>`<tr class="${d.status!=='Conforme'?'row-review':''}"><td>${formatDate(d.date)}</td><td>${d.rate}</td><td class="num">${bdHoursCell(d)}</td><td class="num">${formatHours(d.sapHours)} h</td><td class="num">${signedHours(d.diff)} h</td><td><span class="status-pill ${statusClass(d.status)}">${d.status}</span></td><td>${escapeHtml(d.observation)}</td></tr>`).join('');
+  $('workerModal').classList.add('show');document.body.style.overflow='hidden';
+}
+function openBdTimeDetail(detailKey){
+  if(!state.activeWorker)return;
+  const detail=state.activeWorker.all.find(item=>item.key===detailKey);if(!detail||!detail.bdEntries?.length)return;
+  state.activeBdDetail=detail;
+  $('bdTimeWorker').textContent=state.activeWorker.worker;
+  $('bdTimeDate').textContent=formatDate(detail.date);
+  $('bdTimeRate').textContent=detail.rate;
+  $('bdTimeTotal').textContent=`${formatHours(detail.bdHours)} h`;
+  $('bdTimeSubtitle').textContent=`${state.activeWorker.worker} · ${formatDate(detail.date)} · Recargo ${detail.rate}`;
+  $('bdTimeBody').innerHTML=detail.bdEntries.map((entry,index)=>`<tr><td><span class="time-record">${index+1}</span></td><td><span class="time-value ${entry.start==='No informado'?'time-missing':''}">${escapeHtml(entry.start||'No informado')}</span></td><td><span class="time-value ${entry.end==='No informado'?'time-missing':''}">${escapeHtml(entry.end||'No informado')}</span></td><td class="num"><span class="time-value">${formatHours(entry.hours)} h</span></td><td><span class="time-source">${escapeHtml(bdEntrySource(entry))}</span></td><td class="time-comment">${escapeHtml(entry.comments||'Sin comentario')}</td></tr>`).join('');
+  $('bdTimeModal').classList.add('show');
+}
+function closeBdTimeDetail(){$('bdTimeModal').classList.remove('show');state.activeBdDetail=null}
+function closeWorker(){closeBdTimeDetail();$('workerModal').classList.remove('show');document.body.style.overflow='';state.activeWorker=null}
 
 function openPdfLoadingWindow(){
   const preview=window.open('about:blank','_blank');
@@ -525,11 +599,14 @@ $('summarySearch').addEventListener('input',()=>{state.summaryPage=1;renderSumma
 $('summaryStatus').addEventListener('change',()=>{state.summaryPage=1;renderSummary()});
 $('summaryPrev').addEventListener('click',()=>{state.summaryPage--;renderSummary()});
 $('summaryNext').addEventListener('click',()=>{state.summaryPage++;renderSummary()});
-document.addEventListener('click',e=>{const btn=e.target.closest('[data-worker]');if(btn&&state.results)openWorker(btn.dataset.worker)});
+document.addEventListener('click',e=>{const timeBtn=e.target.closest('[data-bd-time]');if(timeBtn){e.preventDefault();e.stopPropagation();openBdTimeDetail(timeBtn.dataset.bdTime);return}const btn=e.target.closest('[data-worker]');if(btn&&state.results)openWorker(btn.dataset.worker)});
 $('modalClose').addEventListener('click',closeWorker);
 $('modalClose2').addEventListener('click',closeWorker);
 $('workerModal').addEventListener('click',e=>{if(e.target===$('workerModal'))closeWorker()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWorker()});
+$('bdTimeClose').addEventListener('click',closeBdTimeDetail);
+$('bdTimeClose2').addEventListener('click',closeBdTimeDetail);
+$('bdTimeModal').addEventListener('click',e=>{if(e.target===$('bdTimeModal'))closeBdTimeDetail()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('bdTimeModal').classList.contains('show'))closeBdTimeDetail();else closeWorker()}});
 $('exportCsv').addEventListener('click',downloadCsv);
 $('downloadPdf').addEventListener('click',downloadExecutivePdf);
 $('printReport').addEventListener('click',printExecutiveReport);
